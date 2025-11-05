@@ -1,313 +1,271 @@
-# Create the HTML content for the tool
-html_content = """
 <!DOCTYPE html>
 <html lang="th">
 <head>
-    <meta charset="UTF-8">
-    <title>Log API Analyzer</title>
-    <style>
-        body { 
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; 
-            margin: 20px; 
-            background-color: #f4f7f6; 
-            color: #333;
-        }
-        h1 { color: #0056b3; }
-        #app-container {
-            max-width: 1000px;
-            margin: 0 auto;
-            padding: 20px;
-            background-color: #ffffff;
-            border-radius: 8px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
-        }
-        #drop-zone { 
-            border: 2px dashed #007bff; 
-            padding: 30px; 
-            text-align: center; 
-            background-color: #f8faff; 
-            margin-bottom: 20px; 
-            border-radius: 8px;
-            cursor: pointer;
-            transition: background-color 0.2s, border-color 0.2s;
-        }
-        #drop-zone:hover {
-            background-color: #f0f6ff;
-            border-color: #0056b3;
-        }
-        #drop-zone.drag-over { 
-            border-color: #0056b3; 
-            background-color: #e6f0ff; 
-            border-style: solid;
-        }
-        #fileInput { display: none; }
-        #fileList { 
-            margin-top: 15px; 
-            font-style: italic; 
-            color: #555; 
-            font-size: 0.9em;
-        }
-        #analyzeButton { 
-            background-color: #28a745; 
-            color: white; 
-            padding: 12px 25px; 
-            border: none; 
-            border-radius: 5px; 
-            font-size: 16px; 
-            font-weight: bold;
-            cursor: pointer; 
-            margin-top: 10px;
-            display: none; /* Hide until files are selected */
-            width: 100%;
-            transition: background-color 0.2s;
-        }
-        #analyzeButton:hover { background-color: #218838; }
-        #resultsTable { margin-top: 25px; overflow-x: auto; }
-        table { 
-            width: 100%; 
-            border-collapse: collapse; 
-            background-color: #fff; 
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1); 
-            border-radius: 5px;
-            overflow: hidden;
-        }
-        th, td { 
-            border: 1px solid #ddd; 
-            padding: 12px; 
-            text-align: left; 
-        }
-        th { 
-            background-color: #007bff; 
-            color: white;
-            font-size: 0.95em;
-        }
-        tr:nth-child(even) { background-color: #f9f9f9; }
-        tr:hover { background-color: #f1f1f1; }
-        td:first-child, th:first-child {
-            font-weight: bold;
-            background-color: #f8f9fa;
-        }
-        td:last-child {
-            font-weight: bold;
-            background-color: #f8f9fa;
-        }
-        #loading { 
-            display: none; 
-            font-size: 1.2em; 
-            color: #0056b3; 
-            text-align: center;
-            margin: 20px 0;
-        }
-    </style>
+  <meta charset="UTF-8">
+  <title>HHT API Log Analyzer</title>
+  <style>
+    body {
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      margin: 20px;
+      background: #f5f5f5;
+    }
+    h1 {
+      font-size: 22px;
+      margin-bottom: 10px;
+    }
+    .card {
+      background: #ffffff;
+      border-radius: 10px;
+      padding: 16px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+      margin-bottom: 16px;
+    }
+    .card h2 {
+      font-size: 18px;
+      margin-top: 0;
+    }
+    .file-input {
+      margin-bottom: 10px;
+    }
+    table {
+      border-collapse: collapse;
+      width: 100%;
+      margin-top: 10px;
+      font-size: 14px;
+    }
+    th, td {
+      border: 1px solid #ddd;
+      padding: 6px 8px;
+      text-align: left;
+    }
+    th {
+      background: #fafafa;
+    }
+    .badge {
+      display: inline-block;
+      padding: 2px 6px;
+      border-radius: 999px;
+      font-size: 12px;
+      background: #eee;
+    }
+    .badge-ok {
+      background: #d4f7d4;
+    }
+    .badge-zero {
+      background: #ffe4e4;
+    }
+    pre.sample {
+      background: #111;
+      color: #f5f5f5;
+      padding: 8px;
+      border-radius: 6px;
+      max-height: 160px;
+      overflow: auto;
+      font-size: 12px;
+    }
+    .summary-count {
+      font-weight: bold;
+      margin-top: 4px;
+    }
+    .small {
+      font-size: 12px;
+      color: #666;
+    }
+    .footer {
+      font-size: 11px;
+      color: #999;
+      margin-top: 10px;
+      text-align: right;
+    }
+  </style>
 </head>
 <body>
-    <div id="app-container">
-        <h1>เครื่องมือวิเคราะห์ Log API (Log Analyzer)</h1>
-        <p>ลากไฟล์ Log (.txt) ของคุณมาวางในกล่องด้านล่าง หรือกดที่กล่องเพื่อเลือกไฟล์ (รองรับหลายไฟล์)</p>
-        
-        <div id="drop-zone" onclick="document.getElementById('fileInput').click();">
-            คลิก หรือ ลากไฟล์มาวางที่นี่
-            <input type="file" id="fileInput" multiple accept=".txt,.log">
-            <div id="fileList">ยังไม่ได้เลือกไฟล์</div>
-        </div>
-        
-        <button id="analyzeButton">วิเคราะห์ข้อมูล</button>
-        <div id="loading">กำลังประมวลผล...</div>
-        
-        <div id="resultsTable">
-            </div>
+  <h1>วิเคราะห์ Log การใช้งานฟังก์ชั่น HHT</h1>
+
+  <div class="card">
+    <h2>เลือกไฟล์ Log (.txt)</h2>
+    <input class="file-input" type="file" id="logFiles" multiple accept=".txt,.log">
+    <button id="analyzeBtn">วิเคราะห์ log</button>
+    <div class="small">
+      * รองรับไฟล์หลายไฟล์พร้อมกัน (เช่น api_log_YYYY-MM-DD_*.txt)
     </div>
+  </div>
 
-    <script>
-        // --- นี่คือ Logic การวิเคราะห์ที่เราใช้ครับ ---
-        
-        const mappings = {
-            '[POST][/api/v1/orderings/upload]': 'สั่งซื้อสินค้า',
-            '[POST][/api/v1/receivings/upload]': 'รับสินค้า',
-            '[POST][/api/v1/checkProducts/upload]': 'ตรวจเช็คสินค้า',
-            '[POST][/api/v1/priceTags/txt]': 'ป้ายราคา',
-            '[POST][/api/v1/selfAudits/upload]': 'นับสินค้า',
-            '[POST][/api/v1/outOfShelves/upload]': 'OOS Check'
+  <div class="card">
+    <h2>สรุปการใช้งานฟังก์ชั่น</h2>
+    <div id="summaryArea">ยังไม่ได้วิเคราะห์ไฟล์</div>
+  </div>
+
+  <div class="card">
+    <h2>รายละเอียด / ตัวอย่าง Log</h2>
+    <div id="detailArea" class="small">เลือกไฟล์แล้วกด "วิเคราะห์ log" เพื่อดูรายละเอียด</div>
+  </div>
+
+  <div class="footer">
+    HHT Log Analyzer (Client-side only)
+  </div>
+
+  <script>
+    // Mapping API log message -> ชื่อฟังก์ชั่นภาษาไทย
+    const FUNCTION_PATTERNS = {
+      "[POST][/api/v1/orderings/upload]": "สั่งซื้อสินค้า",
+      "[POST][/api/v1/receivings/upload]": "รับสินค้า",
+      "[POST][/api/v1/checkProducts/upload]": "ตรวจเช็คสินค้า",
+      "[POST][/api/v1/priceTags/txt]": "ป้ายราคา",
+      "[POST][/api/v1/selfAudits/upload]": "นับสินค้า",
+      "[POST][/api/v1/outOfShelves/upload]": "OOS Check"
+    };
+
+    const analyzeBtn = document.getElementById("analyzeBtn");
+    const fileInput = document.getElementById("logFiles");
+    const summaryArea = document.getElementById("summaryArea");
+    const detailArea = document.getElementById("detailArea");
+
+    analyzeBtn.addEventListener("click", () => {
+      const files = fileInput.files;
+      if (!files || files.length === 0) {
+        alert("กรุณาเลือกไฟล์ log ก่อน");
+        return;
+      }
+
+      summaryArea.textContent = "กำลังอ่านไฟล์...";
+      detailArea.textContent = "";
+
+      const readers = [];
+      const contents = [];
+
+      for (let i = 0; i < files.length; i++) {
+        readers.push(readFileAsText(files[i]).then(text => {
+          contents.push({ name: files[i].name, text });
+        }));
+      }
+
+      Promise.all(readers).then(() => {
+        const combinedText = contents.map(c => c.text).join("\n");
+        const result = analyzeLogs(combinedText);
+        renderSummary(result, contents.length);
+        renderDetails(result);
+      }).catch(err => {
+        console.error(err);
+        summaryArea.textContent = "เกิดข้อผิดพลาดในการอ่านไฟล์";
+      });
+    });
+
+    function readFileAsText(file) {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = e => resolve(e.target.result);
+        reader.onerror = e => reject(e);
+        reader.readAsText(file, "utf-8");
+      });
+    }
+
+    function escapeRegExp(string) {
+      return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    }
+
+    // ดึง time="xxxx" จากบรรทัด log ถ้ามี
+    function extractTimeFromLine(line) {
+      const match = line.match(/time="([^"]+)"/);
+      return match ? match[1] : "";
+    }
+
+    function analyzeLogs(text) {
+      const lines = text.split(/\r?\n/);
+
+      // เตรียม structure สำหรับเก็บผล
+      const stats = {};
+      Object.keys(FUNCTION_PATTERNS).forEach(key => {
+        stats[key] = {
+          label: FUNCTION_PATTERNS[key],
+          count: 0,
+          firstTime: null,
+          lastTime: null,
+          samples: []
         };
-        
-        const columnOrder = [
-            'สั่งซื้อสินค้า',
-            'รับสินค้า',
-            'ตรวจเช็คสินค้า',
-            'ป้ายราคา',
-            'นับสินค้า',
-            'OOS Check'
-        ];
-        
-        // Regex เพื่อดึงวันที่
-        const timestampRegex = /time="(\d{4}-\d{2}-\d{2}T[0-9:]{8}\+07:00)"/;
-        
-        // --- ส่วนควบคุมหน้าเว็บ (DOM) ---
-        
-        const fileInput = document.getElementById('fileInput');
-        const analyzeButton = document.getElementById('analyzeButton');
-        const resultsTable = document.getElementById('resultsTable');
-        const loading = document.getElementById('loading');
-        const dropZone = document.getElementById('drop-zone');
-        const fileListDiv = document.getElementById('fileList');
+      });
 
-        let selectedFiles = [];
+      // วิ่งทีละบรรทัด หา pattern
+      for (const line of lines) {
+        for (const pattern of Object.keys(FUNCTION_PATTERNS)) {
+          if (line.includes(pattern)) {
+            const timeStr = extractTimeFromLine(line);
+            const info = stats[pattern];
+            info.count++;
 
-        function updateFileList() {
-            if (selectedFiles.length === 0) {
-                fileListDiv.textContent = 'ยังไม่ได้เลือกไฟล์';
-                analyzeButton.style.display = 'none';
-            } else {
-                fileListDiv.textContent = selectedFiles.length + ' ไฟล์ถูกเลือก: ' + Array.from(selectedFiles).map(f => f.name).join(', ');
-                analyzeButton.style.display = 'block';
+            if (!info.firstTime) {
+              info.firstTime = timeStr;
             }
+            info.lastTime = timeStr;
+
+            if (info.samples.length < 5) {
+              info.samples.push(line);
+            }
+          }
         }
+      }
 
-        // Event Listeners สำหรับการเลือกไฟล์
-        fileInput.addEventListener('change', (e) => {
-            selectedFiles = Array.from(e.target.files);
-            updateFileList();
-        });
+      return stats;
+    }
 
-        // Event Listeners สำหรับ Drag and Drop
-        dropZone.addEventListener('dragover', (e) => {
-            e.preventDefault();
-            dropZone.classList.add('drag-over');
-        });
-        dropZone.addEventListener('dragleave', (e) => {
-            e.preventDefault();
-            dropZone.classList.remove('drag-over');
-        });
-        dropZone.addEventListener('drop', (e) => {
-            e.preventDefault();
-            dropZone.classList.remove('drag-over');
-            selectedFiles = Array.from(e.dataTransfer.files);
-            fileInput.files = e.dataTransfer.files; // Sync กับ input
-            updateFileList();
-        });
+    function renderSummary(stats, fileCount) {
+      const totalCalls = Object.values(stats).reduce((sum, s) => sum + s.count, 0);
 
-        // Event Listener สำหรับปุ่มวิเคราะห์
-        analyzeButton.addEventListener('click', () => {
-            if (selectedFiles.length === 0) {
-                alert('กรุณาเลือกไฟล์ Log ก่อนครับ');
-                return;
-            }
-            
-            loading.style.display = 'block';
-            resultsTable.innerHTML = '';
-            
-            processFiles(selectedFiles);
-        });
+      let html = "";
+      html += `<div class="summary-count">จำนวนไฟล์ที่วิเคราะห์: ${fileCount} ไฟล์</div>`;
+      html += `<div class="summary-count">จำนวนการเรียกใช้งานฟังก์ชั่นทั้งหมด: ${totalCalls} ครั้ง</div>`;
 
-        // --- Logic การประมวลผลไฟล์ ---
-        
-        function processFiles(files) {
-            const counts_by_date = {};
-            const fileReadPromises = [];
+      html += `<table>
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>ฟังก์ชั่น</th>
+            <th>Endpoint (ใน log)</th>
+            <th>จำนวนครั้ง</th>
+            <th>ใช้งานครั้งแรก</th>
+            <th>ใช้งานครั้งล่าสุด</th>
+          </tr>
+        </thead>
+        <tbody>
+      `;
 
-            for (const file of files) {
-                fileReadPromises.push(readFileAsText(file, counts_by_date));
-            }
+      const entries = Object.entries(stats);
+      entries.forEach(([pattern, info], index) => {
+        const badgeClass = info.count > 0 ? "badge badge-ok" : "badge badge-zero";
+        const badgeText = info.count > 0 ? "มีการใช้งาน" : "ยังไม่พบใน log";
 
-            Promise.all(fileReadPromises).then(() => {
-                loading.style.display = 'none';
-                displayResults(counts_by_date);
-            }).catch(error => {
-                loading.style.display = 'none';
-                resultsTable.innerHTML = `<p style="color: red;">เกิดข้อผิดพลาด: ${error.message}</p>`;
-            });
+        html += `
+          <tr>
+            <td>${index + 1}</td>
+            <td>${info.label}<br><span class="${badgeClass}">${badgeText}</span></td>
+            <td><code>${pattern}</code></td>
+            <td>${info.count}</td>
+            <td>${info.firstTime || "-"}</td>
+            <td>${info.lastTime || "-"}</td>
+          </tr>
+        `;
+      });
+
+      html += `</tbody></table>`;
+      summaryArea.innerHTML = html;
+    }
+
+    function renderDetails(stats) {
+      let html = "";
+
+      Object.entries(stats).forEach(([pattern, info]) => {
+        html += `<h3>${info.label} <span class="small">(${pattern})</span></h3>`;
+        if (info.count === 0) {
+          html += `<div class="small">ยังไม่พบบรรทัด log ของฟังก์ชั่นนี้</div>`;
+          return;
         }
-        
-        function readFileAsText(file, counts_by_date) {
-            return new Promise((resolve, reject) => {
-                const reader = new FileReader();
-                reader.onload = (e) => {
-                    try {
-                        const content = e.target.result;
-                        // ใช้ \\r?\\n เพื่อรองรับทั้ง Windows และ Unix
-                        const lines = content.split(/\\r?\\n/);
-                        
-                        for (const line of lines) {
-                            if (line.trim() === '') continue;
+        html += `<div class="small">จำนวนทั้งหมด: ${info.count} ครั้ง</div>`;
+        html += `<div class="small">ตัวอย่างบรรทัด log (สูงสุด 5 บรรทัด):</div>`;
+        html += `<pre class="sample">${info.samples.join("\n")}</pre>`;
+      });
 
-                            for (const [api_call, function_name] of Object.entries(mappings)) {
-                                if (line.includes(api_call)) {
-                                    
-                                    // *** นี่คือ Filter สำคัญ ***
-                                    // กรอง Error 400 Bad Request ออก ไม่นับ
-                                    if (line.includes('status_code="400 Bad Request"') || line.includes('code":400')) {
-                                        break; // ไม่นับ Log ที่ล้มเหลว
-                                    }
-                                    
-                                    const match = timestampRegex.exec(line);
-                                    if (match && match[1]) {
-                                        const date_str = match[1].split('T')[0];
-                                        
-                                        // สร้าง object ถ้ายังไม่มี
-                                        if (!counts_by_date[date_str]) {
-                                            counts_by_date[date_str] = {};
-                                        }
-                                        if (!counts_by_date[date_str][function_name]) {
-                                            counts_by_date[date_str][function_name] = 0;
-                                        }
-                                        
-                                        // นับเพิ่ม
-                                        counts_by_date[date_str][function_name]++;
-                                    }
-                                    break; // เจอ mapping แล้ว ไปบรรทัดถัดไป
-                                }
-                            }
-                        }
-                        resolve();
-                    } catch (err) {
-                        reject(err);
-                    }
-                };
-                reader.onerror = (e) => {
-                    reject(new Error('ไม่สามารถอ่านไฟล์ ' + file.name));
-                };
-                reader.readAsText(file, 'UTF-8');
-            });
-        }
-
-        // --- Logic การแสดงผล ---
-
-        function displayResults(counts_by_date) {
-            const sortedDates = Object.keys(counts_by_date).sort();
-            
-            if (sortedDates.length === 0) {
-                resultsTable.innerHTML = '<p>ไม่พบข้อมูลที่ตรงกับเงื่อนไขในไฟล์ที่เลือกครับ</p>';
-                return;
-            }
-            
-            let html = '<table><thead><tr><th>Date</th>';
-            for (const col of columnOrder) {
-                html += `<th>${col}</th>`;
-            }
-            html += '<th>Total</th></tr></thead><tbody>';
-            
-            for (const date of sortedDates) {
-                html += `<tr><td>${date}</td>`;
-                let total_for_date = 0;
-                for (const col of columnOrder) {
-                    const count = counts_by_date[date][col] || 0;
-                    html += `<td>${count}</td>`;
-                    total_for_date += count;
-                }
-                html += `<td><b>${total_for_date}</b></td></tr>`;
-            }
-            
-            html += '</tbody></table>';
-            resultsTable.innerHTML = html;
-        }
-    </script>
-    </body>
-    </html>
-"""
-
-# Save the HTML content to a file, this time named "index.html"
-file_name = "index.html"
-with open(file_name, "w", encoding="utf-8") as f:
-    f.write(html_content)
-
-print(f"File '{file_name}' created successfully.")
+      detailArea.innerHTML = html;
+    }
+  </script>
+</body>
+</html>
