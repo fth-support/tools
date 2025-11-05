@@ -2,7 +2,7 @@
 <html lang="th">
 <head>
   <meta charset="UTF-8">
-  <title>HHT API Log Analyzer</title>
+  <title>สรุปจำนวนการ Upload เอกสารผ่าน API (HHT)</title>
   <style>
     body {
       font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
@@ -27,108 +27,94 @@
     .file-input {
       margin-bottom: 10px;
     }
+    label {
+      font-size: 13px;
+      display: inline-block;
+      margin-right: 8px;
+    }
+    input[type="text"] {
+      padding: 4px 6px;
+      font-size: 13px;
+    }
+    button {
+      padding: 6px 12px;
+      font-size: 13px;
+      cursor: pointer;
+    }
     table {
       border-collapse: collapse;
       width: 100%;
       margin-top: 10px;
-      font-size: 14px;
+      font-size: 13px;
     }
     th, td {
-      border: 1px solid #ddd;
-      padding: 6px 8px;
-      text-align: left;
+      border: 1px solid #ccc;
+      padding: 4px 6px;
+      text-align: center;
     }
-    th {
-      background: #fafafa;
-    }
-    .badge {
-      display: inline-block;
-      padding: 2px 6px;
-      border-radius: 999px;
-      font-size: 12px;
-      background: #eee;
-    }
-    .badge-ok {
-      background: #d4f7d4;
-    }
-    .badge-zero {
-      background: #ffe4e4;
-    }
-    pre.sample {
-      background: #111;
-      color: #f5f5f5;
-      padding: 8px;
-      border-radius: 6px;
-      max-height: 160px;
-      overflow: auto;
-      font-size: 12px;
-    }
-    .summary-count {
+    th.header-main {
+      background: #f79646;
+      color: #fff;
       font-weight: bold;
-      margin-top: 4px;
+      text-align: center;
+    }
+    th.sub-header {
+      background: #fde9d9;
+      font-weight: bold;
+    }
+    td.number {
+      text-align: right;
+    }
+    tr.sum-row td {
+      background: #ddebf7;
+      font-weight: bold;
     }
     .small {
       font-size: 12px;
       color: #666;
-    }
-    .footer {
-      font-size: 11px;
-      color: #999;
-      margin-top: 10px;
-      text-align: right;
-    }
-    h3 {
-      margin-bottom: 4px;
+      margin-top: 4px;
     }
   </style>
 </head>
 <body>
-  <h1>วิเคราะห์ Log การใช้งานฟังก์ชั่น HHT</h1>
+  <h1>จำนวนการ Upload เอกสารผ่าน API (HHT)</h1>
 
   <div class="card">
-    <h2>เลือกไฟล์ Log (.txt)</h2>
-    <input class="file-input" type="file" id="logFiles" multiple accept=".txt,.log">
-    <button id="analyzeBtn">วิเคราะห์ log</button>
+    <h2>เลือกไฟล์ Log และระบุสาขา</h2>
+    <div>
+      <input class="file-input" type="file" id="logFiles" multiple accept=".txt,.log">
+    </div>
+    <div style="margin-top:4px;">
+      <label for="storeCode">รหัสสาขา (ถ้ามี):</label>
+      <input type="text" id="storeCode" placeholder="เช่น 3081">
+    </div>
+    <div style="margin-top:8px;">
+      <button id="analyzeBtn">วิเคราะห์ log</button>
+    </div>
     <div class="small">
-      * รองรับไฟล์หลายไฟล์พร้อมกัน (เช่น api_log_YYYY-MM-DD_*.txt)
+      * เลือกได้หลายไฟล์พร้อมกัน (เช่น api_log_2025-10-20..., api_log_2025-10-21..., ฯลฯ)
     </div>
   </div>
 
   <div class="card">
-    <h2>สรุปการใช้งานรวมทุกวัน</h2>
-    <div id="summaryArea">ยังไม่ได้วิเคราะห์ไฟล์</div>
-  </div>
-
-  <div class="card">
-    <h2>สรุปการใช้งานแยกตามวันที่</h2>
-    <div id="perDateArea" class="small">ยังไม่มีข้อมูล กรุณาเลือกไฟล์แล้วกด "วิเคราะห์ log"</div>
-  </div>
-
-  <div class="card">
-    <h2>รายละเอียด / ตัวอย่าง Log</h2>
-    <div id="detailArea" class="small">เลือกไฟล์แล้วกด "วิเคราะห์ log" เพื่อดูรายละเอียด</div>
-  </div>
-
-  <div class="footer">
-    HHT Log Analyzer (Client-side only)
+    <h2>สรุปจำนวนการใช้งานรายวัน</h2>
+    <div id="tableArea">ยังไม่ได้วิเคราะห์ไฟล์</div>
   </div>
 
   <script>
-    // Mapping API log message -> ชื่อฟังก์ชั่นภาษาไทย
-    const FUNCTION_PATTERNS = {
-      "[POST][/api/v1/orderings/upload]": "สั่งซื้อสินค้า",
-      "[POST][/api/v1/receivings/upload]": "รับสินค้า",
-      "[POST][/api/v1/checkProducts/upload]": "ตรวจเช็คสินค้า",
-      "[POST][/api/v1/priceTags/txt]": "ป้ายราคา",
-      "[POST][/api/v1/selfAudits/upload]": "นับสินค้า",
-      "[POST][/api/v1/outOfShelves/upload]": "OOS Check"
-    };
+    // Mapping endpoint -> ชื่อคอลัมน์ภาษาไทย
+    const FUNCTION_COLUMNS = [
+      { key: "[POST][/api/v1/orderings/upload]",   label: "สั่งซื้อสินค้า" },
+      { key: "[POST][/api/v1/receivings/upload]",  label: "รับสินค้า" },
+      { key: "[POST][/api/v1/checkProducts/upload]", label: "ตรวจเช็คสินค้า" },
+      { key: "[POST][/api/v1/priceTags/txt]",      label: "ป้ายราคา" },
+      { key: "[POST][/api/v1/selfAudits/upload]",  label: "นับสินค้า" },
+      { key: "[POST][/api/v1/outOfShelves/upload]", label: "OOS Check" }
+    ];
 
     const analyzeBtn = document.getElementById("analyzeBtn");
     const fileInput = document.getElementById("logFiles");
-    const summaryArea = document.getElementById("summaryArea");
-    const detailArea = document.getElementById("detailArea");
-    const perDateArea = document.getElementById("perDateArea");
+    const tableArea = document.getElementById("tableArea");
 
     analyzeBtn.addEventListener("click", () => {
       const files = fileInput.files;
@@ -137,9 +123,7 @@
         return;
       }
 
-      summaryArea.textContent = "กำลังอ่านไฟล์...";
-      detailArea.textContent = "";
-      perDateArea.textContent = "";
+      tableArea.textContent = "กำลังอ่านไฟล์...";
 
       const readers = [];
       const contents = [];
@@ -150,16 +134,16 @@
         }));
       }
 
-      Promise.all(readers).then(() => {
-        const combinedText = contents.map(c => c.text).join("\n");
-        const result = analyzeLogs(combinedText);
-        renderSummary(result.totalStats, contents.length);
-        renderDetails(result.totalStats);
-        renderPerDate(result.perDateStats);
-      }).catch(err => {
-        console.error(err);
-        summaryArea.textContent = "เกิดข้อผิดพลาดในการอ่านไฟล์";
-      });
+      Promise.all(readers)
+        .then(() => {
+          const combinedText = contents.map(c => c.text).join("\n");
+          const result = analyzeLogs(combinedText);
+          renderDailyTable(result);
+        })
+        .catch(err => {
+          console.error(err);
+          tableArea.textContent = "เกิดข้อผิดพลาดในการอ่านไฟล์";
+        });
     });
 
     function readFileAsText(file) {
@@ -171,189 +155,130 @@
       });
     }
 
-    // ดึง time="xxxx" จากบรรทัด log ถ้ามี
     function extractTimeFromLine(line) {
       const match = line.match(/time="([^"]+)"/);
       return match ? match[1] : "";
     }
 
-    // ตัด date ออกจาก time string (เช่น "2025-11-02")
+    // ได้ "2025-10-20" จาก "2025-10-20T22:32:04+07:00"
     function extractDateFromTimeStr(timeStr) {
       if (!timeStr) return null;
-      // รูปแบบส่วนใหญ่จะเป็น 2025-11-02T21:49:04+07:00
-      return timeStr.substring(0, 10); // YYYY-MM-DD
+      return timeStr.substring(0, 10);
     }
 
-    function initStat(label) {
-      return {
-        label: label,
-        count: 0,
-        firstTime: null,
-        lastTime: null,
-        samples: []
-      };
+    function formatDateDisplay(dateStr) {
+      // จาก YYYY-MM-DD -> DD/MM/YYYY
+      const [y, m, d] = dateStr.split("-");
+      return `${d}/${m}/${y}`;
     }
 
-    function updateStat(stat, timeStr, line) {
-      stat.count++;
-      if (timeStr) {
-        if (!stat.firstTime) {
-          stat.firstTime = timeStr;
-        }
-        stat.lastTime = timeStr;
-      }
-      if (stat.samples.length < 5) {
-        stat.samples.push(line);
-      }
+    function initDailyObj() {
+      const obj = { total: 0 };
+      FUNCTION_COLUMNS.forEach(col => {
+        obj[col.key] = 0;
+      });
+      return obj;
     }
 
     function analyzeLogs(text) {
       const lines = text.split(/\r?\n/);
 
-      // รวมทุกวัน
-      const totalStats = {};
-      Object.keys(FUNCTION_PATTERNS).forEach(key => {
-        totalStats[key] = initStat(FUNCTION_PATTERNS[key]);
+      const daily = {};            // { "2025-10-20": { key1: count, ..., total } }
+      const columnTotals = {};     // { key1: sum, ... }
+      FUNCTION_COLUMNS.forEach(col => {
+        columnTotals[col.key] = 0;
       });
-
-      // แยกตามวันที่
-      const perDateStats = {}; // { "2025-11-02": { pattern: statObj, ... }, ... }
+      let grandTotal = 0;
 
       for (const line of lines) {
         const timeStr = extractTimeFromLine(line);
         const dateStr = extractDateFromTimeStr(timeStr);
+        if (!dateStr) continue;
 
-        for (const pattern of Object.keys(FUNCTION_PATTERNS)) {
-          if (line.includes(pattern)) {
-            // รวมทุกวัน
-            updateStat(totalStats[pattern], timeStr, line);
-
-            // แยกตามวันที่ (ถ้ามี date)
-            if (dateStr) {
-              if (!perDateStats[dateStr]) {
-                perDateStats[dateStr] = {};
-              }
-              if (!perDateStats[dateStr][pattern]) {
-                perDateStats[dateStr][pattern] = initStat(FUNCTION_PATTERNS[pattern]);
-              }
-              updateStat(perDateStats[dateStr][pattern], timeStr, line);
+        for (const col of FUNCTION_COLUMNS) {
+          if (line.includes(col.key)) {
+            if (!daily[dateStr]) {
+              daily[dateStr] = initDailyObj();
             }
+            daily[dateStr][col.key]++;
+            daily[dateStr].total++;
+
+            columnTotals[col.key]++;
+            grandTotal++;
           }
         }
       }
 
-      return { totalStats, perDateStats };
+      return { daily, columnTotals, grandTotal };
     }
 
-    function renderSummary(stats, fileCount) {
-      const totalCalls = Object.values(stats).reduce((sum, s) => sum + s.count, 0);
+    function renderDailyTable(result) {
+      const { daily, columnTotals, grandTotal } = result;
+      const dates = Object.keys(daily).sort();
+
+      if (dates.length === 0) {
+        tableArea.textContent = "ไม่พบบรรทัด log ที่มีการเรียก API ตามที่กำหนด";
+        return;
+      }
+
+      const storeCode = document.getElementById("storeCode").value.trim();
 
       let html = "";
-      html += `<div class="summary-count">จำนวนไฟล์ที่วิเคราะห์: ${fileCount} ไฟล์</div>`;
-      html += `<div class="summary-count">จำนวนการเรียกใช้งานฟังก์ชั่นทั้งหมด (รวมทุกวัน): ${totalCalls} ครั้ง</div>`;
 
       html += `<table>
         <thead>
           <tr>
-            <th>#</th>
-            <th>ฟังก์ชั่น</th>
-            <th>Endpoint (ใน log)</th>
-            <th>จำนวนครั้ง</th>
-            <th>ใช้งานครั้งแรก</th>
-            <th>ใช้งานครั้งล่าสุด</th>
+            <th class="header-main" colspan="${2 + FUNCTION_COLUMNS.length}">จำนวนการ upload เอกสารผ่าน API</th>
+          </tr>
+          <tr>
+            <th class="sub-header">วันที่</th>`;
+
+      FUNCTION_COLUMNS.forEach(col => {
+        html += `<th class="sub-header">${col.label}</th>`;
+      });
+
+      html += `<th class="sub-header">Total</th>
           </tr>
         </thead>
         <tbody>
       `;
 
-      const entries = Object.entries(stats);
-      entries.forEach(([pattern, info], index) => {
-        const badgeClass = info.count > 0 ? "badge badge-ok" : "badge badge-zero";
-        const badgeText = info.count > 0 ? "มีการใช้งาน" : "ยังไม่พบใน log";
-
-        html += `
-          <tr>
-            <td>${index + 1}</td>
-            <td>${info.label}<br><span class="${badgeClass}">${badgeText}</span></td>
-            <td><code>${pattern}</code></td>
-            <td>${info.count}</td>
-            <td>${info.firstTime || "-"}</td>
-            <td>${info.lastTime || "-"}</td>
-          </tr>
-        `;
-      });
-
-      html += `</tbody></table>`;
-      summaryArea.innerHTML = html;
-    }
-
-    function renderDetails(stats) {
-      let html = "";
-
-      Object.entries(stats).forEach(([pattern, info]) => {
-        html += `<h3>${info.label} <span class="small">(${pattern})</span></h3>`;
-        if (info.count === 0) {
-          html += `<div class="small">ยังไม่พบบรรทัด log ของฟังก์ชั่นนี้</div>`;
-          return;
-        }
-        html += `<div class="small">จำนวนทั้งหมด (รวมทุกวัน): ${info.count} ครั้ง</div>`;
-        html += `<div class="small">ตัวอย่างบรรทัด log (สูงสุด 5 บรรทัด):</div>`;
-        html += `<pre class="sample">${info.samples.join("\n")}</pre>`;
-      });
-
-      detailArea.innerHTML = html;
-    }
-
-    function renderPerDate(perDateStats) {
-      const dates = Object.keys(perDateStats).sort();
-      if (dates.length === 0) {
-        perDateArea.innerHTML = "ยังไม่พบข้อมูลวันที่ใน log (ไม่มี time=\"...\")";
-        return;
-      }
-
-      let html = "";
-
+      // แถวต่อวัน
       dates.forEach(dateStr => {
-        const statsForDate = perDateStats[dateStr];
+        const dayObj = daily[dateStr];
+        html += `<tr>
+          <td>${formatDateDisplay(dateStr)}</td>`;
 
-        // เอาเฉพาะฟังก์ชั่นที่มีการใช้งานในวันนั้น
-        const entries = Object.entries(statsForDate).filter(([, info]) => info.count > 0);
-        if (entries.length === 0) return;
-
-        const totalForDate = entries.reduce((sum, [, info]) => sum + info.count, 0);
-
-        html += `<h3>วันที่ ${dateStr} <span class="small">(รวม ${totalForDate} ครั้ง)</span></h3>`;
-        html += `<table>
-          <thead>
-            <tr>
-              <th>#</th>
-              <th>ฟังก์ชั่น</th>
-              <th>Endpoint</th>
-              <th>จำนวนครั้งในวันนั้น</th>
-              <th>เวลาแรก</th>
-              <th>เวลาล่าสุด</th>
-            </tr>
-          </thead>
-          <tbody>
-        `;
-
-        entries.forEach(([pattern, info], index) => {
-          html += `
-            <tr>
-              <td>${index + 1}</td>
-              <td>${info.label}</td>
-              <td><code>${pattern}</code></td>
-              <td>${info.count}</td>
-              <td>${info.firstTime || "-"}</td>
-              <td>${info.lastTime || "-"}</td>
-            </tr>
-          `;
+        FUNCTION_COLUMNS.forEach(col => {
+          html += `<td class="number">${dayObj[col.key] || 0}</td>`;
         });
 
-        html += `</tbody></table>`;
+        html += `<td class="number">${dayObj.total}</td>
+        </tr>`;
       });
 
-      perDateArea.innerHTML = html;
+      // แถว Sum function
+      html += `<tr class="sum-row">
+        <td>Sum function</td>`;
+
+      FUNCTION_COLUMNS.forEach(col => {
+        html += `<td class="number">${columnTotals[col.key]}</td>`;
+      });
+
+      html += `<td class="number">${grandTotal}</td>
+      </tr>`;
+
+      html += `</tbody></table>`;
+
+      if (storeCode) {
+        html += `<div class="small" style="margin-top:4px;">สาขา ${storeCode}</div>`;
+      }
+
+      html += `<div class="small" style="margin-top:4px;">
+        รวมจำนวนการ upload เอกสารผ่าน API ทั้งหมด: ${grandTotal} ครั้ง
+      </div>`;
+
+      tableArea.innerHTML = html;
     }
   </script>
 </body>
