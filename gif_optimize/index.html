@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8" />
+  <title>GIF Optimizer Helper for SCO (C# / Windows)</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    :root {
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: #0f172a;
+      color: #e5e7eb;
+    }
+    body {
+      margin: 0;
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    .app {
+      max-width: 960px;
+      width: 100%;
+      background: #020617;
+      border-radius: 18px;
+      padding: 24px 28px 32px;
+      box-shadow: 0 24px 60px rgba(0,0,0,0.65);
+      border: 1px solid #1e293b;
+    }
+    h1 {
+      font-size: 1.6rem;
+      margin: 0 0 8px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: #e5e7eb;
+    }
+    h2 { font-size: 1.15rem; margin-top: 20px; margin-bottom: 6px; color: #e5e7eb; }
+    p, li { font-size: 0.9rem; color: #9ca3af; }
+    input[type="text"], input[type="number"] {
+      background: #020617; border-radius: 999px; border: 1px solid #1f2937;
+      padding: 6px 12px; color: #e5e7eb; font-size: 0.9rem; min-width: 0;
+    }
+    .btn {
+      border-radius: 999px; padding: 8px 18px; border: none; font-size: 0.9rem;
+      font-weight: 600; cursor: pointer; background: linear-gradient(135deg, #22c55e, #16a34a);
+      color: #020617; box-shadow: 0 14px 30px rgba(16,185,129,0.35); margin-top: 8px;
+    }
+    pre {
+      background: #020617; border-radius: 14px; padding: 10px 12px;
+      font-size: 0.8rem; color: #e5e7eb; border: 1px solid #1f2937;
+      overflow-x: auto; line-height: 1.4; margin-top: 8px; margin-bottom: 0;
+    }
+    .section {
+      margin-top: 16px; padding: 16px 18px; border-radius: 14px;
+      background: radial-gradient(circle at 0 0, rgba(56,189,248,0.06), transparent 55%),
+                  radial-gradient(circle at 100% 100%, rgba(129,140,248,0.06), transparent 55%),
+                  #020617; border: 1px solid #1f2937;
+    }
+    .flow {
+      display: flex; flex-wrap: wrap; gap: 10px; align-items: center; justify-content: space-between; margin-top: 10px;
+    }
+    .flow-step {
+      flex: 1 1 160px; min-width: 140px; background: #020617;
+      border-radius: 14px; border: 1px solid #1f2937; padding: 10px 12px; font-size: 0.8rem;
+    }
+    .flow-step strong { display: block; margin-bottom: 4px; color: #e5e7eb; }
+    .flow-step ul { margin: 0; padding-left: 16px; color: #9ca3af; }
+    .flow-arrow { flex: 0 0 auto; font-size: 1.2rem; color: #6b7280; text-align: center; }
+    .diff-table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 0.8rem; }
+    .diff-table th, .diff-table td { border: 1px solid #1f2937; padding: 6px 8px; text-align: left; }
+    .diff-table th { background: #020617; color: #e5e7eb; }
+    .diff-table td { color: #9ca3af; }
+    .small-note { font-size: 0.8rem; color: #9ca3af; }
+    .footer { margin-top: 18px; font-size: 0.75rem; color: #6b7280; text-align: right; }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <h1>GIF Optimizer Helper for SCO (C# / Windows)</h1>
+    <p class="small-note">สร้างคำสั่ง <strong>magick</strong> + <strong>gifsicle</strong> เพื่อทำให้ GIF เสถียร ลื่น และไม่กระพริบ บนโปรแกรม C# / SCO</p>
+
+    <div class="section">
+      <h2>1) ตั้งค่าและสร้างคำสั่ง</h2>
+      <label>ชื่อไฟล์ Input</label><br>
+      <input id="in" type="text" value="in.gif"><br>
+      <label>ชื่อไฟล์ Output</label><br>
+      <input id="out" type="text" value="out_optimized.gif"><br>
+      <label>ระดับการบีบ (0–100): </label>
+      <input id="lossy" type="number" value="40" min="0" max="100"><br>
+      <button class="btn" id="gen">⚙️ Generate Commands</button>
+
+      <pre id="magickCmd"></pre>
+      <pre id="gifsicleCmd"></pre>
+    </div>
+
+    <div class="section">
+      <h2>2) ขั้นตอนการทำงาน (Flow)</h2>
+      <div class="flow">
+        <div class="flow-step">
+          <strong>1️⃣ original.gif</strong>
+          <ul>
+            <li>อาจมี transparency / disposal ไม่แน่นอน</li>
+            <li>เฟรมบางส่วนซ้อนกัน / metadata เยอะ</li>
+          </ul>
+        </div>
+        <div class="flow-arrow">➡</div>
+        <div class="flow-step">
+          <strong>2️⃣ fixed.gif (หลังใช้ magick)</strong>
+          <ul>
+            <li>ใช้ <code>magick</code> ลบ transparency และรวมเฟรมเต็ม</li>
+            <li>เสถียรขึ้น เหมาะกับ C# renderer</li>
+          </ul>
+        </div>
+        <div class="flow-arrow">➡</div>
+        <div class="flow-step">
+          <strong>3️⃣ out_optimized.gif (หลังใช้ gifsicle)</strong>
+          <ul>
+            <li>ใช้ <code>gifsicle</code> ลดขนาดไฟล์</li>
+            <li>ภาพยังคม ลื่น เสถียรบน SCO</li>
+          </ul>
+        </div>
+      </div>
+
+      <table class="diff-table">
+        <thead><tr><th>ไฟล์</th><th>ลักษณะ</th><th>ผลต่อ SCO / C#</th></tr></thead>
+        <tbody>
+          <tr><td>original.gif</td><td>มี transparency / เฟรมซ้อน / metadata เยอะ</td><td>อาจกระพริบ / หน่วง / crash</td></tr>
+          <tr><td>fixed.gif</td><td>ไม่มี transparency / เฟรมเต็มทุกเฟรม</td><td>เสถียรขึ้น ไม่กระพริบ</td></tr>
+          <tr><td>out_optimized.gif</td><td>บีบไฟล์เล็กลง (~40–70%)</td><td>โหลดเร็ว เหมาะกับ SCO C#</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="section">
+      <h2>3) วิธีติดตั้งเครื่องมือ (Windows)</h2>
+      <p class="small-note">ใช้ PowerShell (Run as Administrator)</p>
+      <pre>
+Set-ExecutionPolicy Bypass -Scope Process -Force; [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.ServicePointManager]::SecurityProtocol -bor 3072; iex ((New-Object System.Net.WebClient).DownloadString('https://community.chocolatey.org/install.ps1'))
+
+choco install imagemagick -y
+choco install gifsicle -y
+      </pre>
+      <p class="small-note">หลังติดตั้งเสร็จ สามารถใช้คำสั่ง <code>magick</code> และ <code>gifsicle</code> ได้จากทุกโฟลเดอร์</p>
+    </div>
+
+    <div class="section">
+      <h2>4) คำสั่งที่ใช้จริง</h2>
+      <p class="small-note">ทำตามลำดับนี้ (ใช้ใน PowerShell / CMD ในโฟลเดอร์เดียวกับไฟล์ GIF):</p>
+      <pre>magick in.gif -coalesce -alpha remove -alpha off -strip fixed.gif
+gifsicle -O3 --lossy=40 fixed.gif -o out_optimized.gif</pre>
+      <p class="small-note">
+        ✅ <strong>magick</strong> = ซ่อมไฟล์ให้เสถียร ลบ transparency<br>
+        ✅ <strong>gifsicle</strong> = บีบอัดให้ขนาดเล็กลง โดยภาพยังคงคุณภาพสูง
+      </p>
+    </div>
+
+    <div class="footer">สร้างโดย Don Jirapatpong | ใช้ภายในทีม SCO / FTH | ทำงาน Offline 100%</div>
+  </div>
+
+  <script>
+    const gen = document.getElementById('gen');
+    const magickCmd = document.getElementById('magickCmd');
+    const gifsicleCmd = document.getElementById('gifsicleCmd');
+    gen.addEventListener('click', () => {
+      const input = document.getElementById('in').value.trim() || 'in.gif';
+      const output = document.getElementById('out').value.trim() || 'out_optimized.gif';
+      const lossy = document.getElementById('lossy').value.trim() || '40';
+      const magick = `magick "${input}" -coalesce -alpha remove -alpha off -strip "fixed.gif"`;
+      const gifsicle = `gifsicle -O3 --lossy=${lossy} "fixed.gif" -o "${output}"`;
+      magickCmd.textContent = magick;
+      gifsicleCmd.textContent = gifsicle;
+    });
+  </script>
+</body>
+</html>
