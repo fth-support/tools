@@ -2,7 +2,7 @@
 <html lang="th">
 <head>
     <meta charset="UTF-8">
-    <title>Log Analyzer V9.0 - Multi-Module Performance</title>
+    <title>Log Analyzer V9.1 - Ticket Print Fixed</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.3.0/exceljs.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
@@ -17,61 +17,48 @@
         }
         body { font-family: 'Segoe UI', Tahoma, sans-serif; background-color: var(--bg-color); margin: 0; padding: 0; }
         
-        /* Header & Navigation */
         .header-upload { background: white; padding: 15px; text-align: center; border-bottom: 1px solid #ddd; position: sticky; top: 0; z-index: 1200; }
         .main-nav { display: flex; justify-content: center; background: #2c3e50; padding: 10px 0; gap: 20px; position: sticky; top: 60px; z-index: 1100; }
-        .nav-item { color: #bdc3c7; cursor: pointer; font-weight: bold; padding: 5px 15px; border-radius: 20px; transition: 0.3s; }
-        .nav-item.active { color: white; background: var(--primary-color); }
+        .nav-item { color: #bdc3c7; cursor: pointer; font-weight: bold; padding: 5px 20px; border-radius: 20px; transition: 0.3s; }
+        .nav-item.active { color: white; background: var(--primary-color); box-shadow: 0 2px 10px rgba(0,0,0,0.2); }
 
-        .tab-container { 
-            display: flex; overflow-x: auto; background: #fff; padding: 10px 10px 0 10px; gap: 4px;
-            position: sticky; top: 105px; z-index: 1050; border-bottom: 1px solid #ccc;
-        }
-        .tab-btn {
-            padding: 8px 16px; border: 1px solid #ccc; border-bottom: none; background: #f1f3f4;
-            border-radius: 8px 8px 0 0; cursor: pointer; font-size: 0.85em; white-space: nowrap;
-        }
+        .tab-container { display: flex; overflow-x: auto; background: #fff; padding: 10px 10px 0 10px; gap: 4px; position: sticky; top: 105px; z-index: 1050; border-bottom: 1px solid #ccc; }
+        .tab-btn { padding: 8px 16px; border: 1px solid #ccc; border-bottom: none; background: #f1f3f4; border-radius: 8px 8px 0 0; cursor: pointer; font-size: 0.85em; white-space: nowrap; }
         .tab-btn.active { background: white; font-weight: bold; border-top: 3px solid var(--primary-color); }
 
-        .export-btn { background: #1d6f42; color: white; border: none; padding: 8px 15px; border-radius: 4px; cursor: pointer; font-weight: bold; margin-left: 10px; }
-
-        /* Dashboard Area */
         .sticky-top-area { position: sticky; top: 144px; z-index: 1000; background: white; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
         .stats-bar, .sla-bar { display: flex; gap: 8px; padding: 10px; border-bottom: 1px solid #eee; }
         
         .card-stat { flex: 1; padding: 10px; border-radius: 8px; text-align: center; border: 1px solid #dadce0; }
-        .card-stat small { display: block; font-size: 0.85em; font-weight: 700; margin-bottom: 4px; text-transform: uppercase; color: #5f6368; }
+        .card-stat small { display: block; font-size: 0.85em; font-weight: 700; margin-bottom: 4px; color: #5f6368; }
         .card-stat strong { font-size: 1.6em; line-height: 1.2; display: block; }
         
         .sla-card { flex: 1; padding: 10px 2px; border-radius: 6px; text-align: center; border: 1px solid #eee; }
-        .sla-card small { display: block; font-size: 1.1em; font-weight: 800; margin-bottom: 5px; }
+        .sla-card small { display: block; font-size: 1.2em; font-weight: 800; margin-bottom: 5px; } /* ขยายตัวหนังสือ SLA ตามคำขอ */
         .sla-card strong { font-size: 1.3em; }
 
         .chart-bar { padding: 10px 20px; height: 160px; border-bottom: 1px solid #eee; }
-
-        /* Table Area */
-        .container { width: 100%; }
         table { width: 100%; border-collapse: collapse; table-layout: fixed; background: white; }
         thead th { background: var(--primary-color); color: white; position: sticky; z-index: 999; padding: 12px 15px; text-align: left; }
         td { padding: 12px 15px; border-bottom: 1px solid #eee; font-size: 0.95em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         .col-idx { width: 70px; text-align: center; }
         .col-req, .col-res { width: 35%; }
         .col-dur { width: 20%; text-align: right; font-weight: 700; }
-        .slow-warn { background: var(--warning-bg); color: var(--warning); }
         .slow-danger { background: var(--danger-bg); color: var(--danger); }
+        .export-btn { background: #1d6f42; color: white; border: none; padding: 8px 15px; border-radius: 4px; cursor: pointer; font-weight: bold; margin-left: 10px; }
     </style>
 </head>
 <body>
 
 <div class="header-upload">
-    <strong>Log Analyzer V9.0 (Multi-Module)</strong> | 
+    <strong>Log Analyzer V9.1</strong> | 
     <input type="file" id="fileInput" accept=".log,.txt" multiple>
     <button id="exportBtn" class="export-btn" style="display:none;" onclick="exportEverything()">✨ Export Multi-Module Excel</button>
 </div>
 
 <div id="moduleNav" class="main-nav" style="display:none;">
-    <div class="nav-item active" onclick="switchModule('getitem')">GETITEM PERFORMANCE</div>
-    <div class="nav-item" onclick="switchModule('ticket')">TICKET PRINT PERFORMANCE</div>
+    <div id="nav-getitem" class="nav-item active" onclick="switchModule('getitem')">GETITEM PERFORMANCE</div>
+    <div id="nav-ticket" class="nav-item" onclick="switchModule('ticket')">TICKET PRINT PERFORMANCE</div>
 </div>
 
 <div id="tabContainer" class="tab-container" style="display:none;"></div>
@@ -88,8 +75,8 @@
             <thead>
                 <tr>
                     <th class="col-idx">#</th>
-                    <th class="col-req">Request (Start)</th>
-                    <th class="col-res">Response (Complete)</th>
+                    <th id="th-start" class="col-req">Start Timestamp</th>
+                    <th id="th-end" class="col-res">End Timestamp</th>
                     <th class="col-dur">Duration (ms)</th>
                 </tr>
             </thead>
@@ -102,12 +89,11 @@
     let myChart = null;
     let allFilesData = []; 
     let activeIndex = 0;
-    let activeModule = 'getitem'; // 'getitem' or 'ticket'
+    let activeModule = 'getitem';
 
     document.getElementById('fileInput').addEventListener('change', async function(e) {
         const files = Array.from(e.target.files);
         if (files.length === 0) return;
-
         allFilesData = await Promise.all(files.map(file => {
             return new Promise(resolve => {
                 const reader = new FileReader();
@@ -115,7 +101,6 @@
                 reader.readAsText(file);
             });
         }));
-
         document.getElementById('moduleNav').style.display = 'flex';
         renderTabs();
         switchModule('getitem');
@@ -138,49 +123,57 @@
         let tempGetitem = null;
         let tempTicket = null;
 
+        // ปรับปรุง Regex ให้รองรับทั้งตัวเล็กตัวใหญ่และอักขระพิเศษหน้า Keyword
+        const reGetReq = /Getitem Request/i;
+        const reGetRes = /Getitem Response/i;
+        const reTicReq = /Endtransaction Request/i;
+        const reTicRes = /print Receipt Completed/i;
+        const reEdcErr = /EDC Response Error/i;
+
         lines.forEach(line => {
-            const lower = line.toLowerCase();
-            
-            // 1. Getitem Logic
-            if (lower.includes("getitem request")) tempGetitem = cleanTimestamp(line);
-            else if (lower.includes("getitem response") && tempGetitem) {
+            // 1. Getitem
+            if (reGetReq.test(line)) tempGetitem = cleanTimestamp(line);
+            else if (reGetRes.test(line) && tempGetitem) {
                 const res = cleanTimestamp(line);
                 if (res) getitemPairs.push({ reqTime: tempGetitem.formatted, resTime: res.formatted, hour: tempGetitem.hour, duration: res.dateObj - tempGetitem.dateObj });
                 tempGetitem = null;
             }
 
-            // 2. Ticket Print Logic
-            if (lower.includes("endtransaction request:")) tempTicket = cleanTimestamp(line);
-            else if (lower.includes("print receipt completed") && tempTicket) {
+            // 2. Ticket Print
+            if (reTicReq.test(line)) tempTicket = cleanTimestamp(line);
+            else if (reTicRes.test(line) && tempTicket) {
                 const res = cleanTimestamp(line);
                 if (res) ticketPairs.push({ reqTime: tempTicket.formatted, resTime: res.formatted, hour: tempTicket.hour, duration: res.dateObj - tempTicket.dateObj });
                 tempTicket = null;
             }
 
-            // 3. EDC Error Logic
-            if (line.includes("EDC Response Error")) ticketErrorCount++;
+            // 3. EDC Error
+            if (reEdcErr.test(line)) ticketErrorCount++;
         });
 
-        return { fileName, getitem: calculateStats(getitemPairs), ticket: calculateStats(ticketPairs, ticketErrorCount) };
+        return { 
+            fileName, 
+            getitem: calculateStats(getitemPairs), 
+            ticket: calculateStats(ticketPairs, ticketErrorCount) 
+        };
     }
 
     function calculateStats(pairs, errors = null) {
         const durs = pairs.map(p => p.duration);
         const total = pairs.length;
         const avg = total > 0 ? (durs.reduce((a, b) => a + b, 0) / total) : 0;
-        return { 
-            pairs, 
-            errors,
-            avg: avg.toFixed(1), 
-            min: total > 0 ? Math.min(...durs) : 0, 
-            max: total > 0 ? Math.max(...durs) : 0, 
-            total 
-        };
+        return { pairs, errors, avg: avg.toFixed(1), min: total > 0 ? Math.min(...durs) : 0, max: total > 0 ? Math.max(...durs) : 0, total };
     }
 
     function switchModule(module) {
         activeModule = module;
-        document.querySelectorAll('.nav-item').forEach(el => el.classList.toggle('active', el.innerText.toLowerCase().includes(module)));
+        document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+        document.getElementById(`nav-${module}`).classList.add('active');
+        
+        // ปรับหัวตารางให้สอดคล้อง
+        document.getElementById('th-start').innerText = module === 'getitem' ? 'Request Timestamp' : 'EndTransaction Req';
+        document.getElementById('th-end').innerText = module === 'getitem' ? 'Response Timestamp' : 'Print Completed';
+        
         updateUI();
     }
 
@@ -205,10 +198,10 @@
             <div class="card-stat stat-avg"><small>AVG TIME</small><strong>${moduleData.avg} ms</strong></div>
             <div class="card-stat stat-min"><small>MIN TIME</small><strong>${moduleData.min.toLocaleString()} ms</strong></div>
             <div class="card-stat stat-max"><small>MAX TIME</small><strong>${moduleData.max.toLocaleString()} ms</strong></div>
-            <div class="card-stat"><small>TOTAL COUNT</small><strong>${moduleData.total.toLocaleString()}</strong></div>
+            <div class="card-stat" style="background:#f1f3f4;"><small>TOTAL COUNT</small><strong>${moduleData.total.toLocaleString()}</strong></div>
         `;
         if (activeModule === 'ticket') {
-            statsHTML += `<div class="card-stat stat-max" style="background:var(--danger-bg);"><small>PRINT ERRORS</small><strong style="color:var(--danger)">${moduleData.errors}</strong></div>`;
+            statsHTML += `<div class="card-stat" style="background:var(--danger-bg); color:var(--danger); border: 1px solid var(--danger);"><small>EDC ERRORS</small><strong>${moduleData.errors}</strong></div>`;
         }
         document.getElementById('statsBar').innerHTML = statsHTML;
 
@@ -216,7 +209,7 @@
         let slaHTML = '';
         if (activeModule === 'getitem') {
             const labels = ['< 1s', '1-1.5s', '1.5-2s', '2-3s', '> 3s'];
-            const ranges = [[0,1000],[1000,1500],[1500,2000],[2000,3000],[3000,999999]];
+            const ranges = [[0,1000],[1000,1500],[1500,2000],[2000,3000],[3000,9999999]];
             const colors = ['var(--success)','var(--info)','var(--normal)','var(--warning)','var(--danger)'];
             slaHTML = labels.map((l, i) => {
                 const count = moduleData.pairs.filter(p => p.duration >= ranges[i][0] && p.duration < ranges[i][1]).length;
@@ -225,26 +218,20 @@
             }).join('');
         } else {
             const labels = ['< 5s', '5-6s', '7-8s', '> 8s'];
-            const ranges = [[0,5000],[5000,6000],[6000,8000],[8000,999999]];
+            const ranges = [[0,5000],[5000,6000],[6000,8000],[8000,9999999]];
             const colors = ['var(--success)','var(--info)','var(--warning)','var(--danger)'];
             slaHTML = labels.map((l, i) => {
                 const count = moduleData.pairs.filter(p => p.duration >= ranges[i][0] && p.duration < ranges[i][1]).length;
                 const pct = moduleData.total > 0 ? ((count/moduleData.total)*100).toFixed(1) : 0;
-                return `<div class="sla-card"><small style="font-size:1.1em; font-weight:800">${l}</small><strong style="color:${colors[i]}">${pct}%</strong></div>`;
+                return `<div class="sla-card"><small>${l}</small><strong style="color:${colors[i]}">${pct}%</strong></div>`;
             }).join('');
         }
         document.getElementById('slaBar').innerHTML = slaHTML;
 
         // Table UI
-        const avgVal = parseFloat(moduleData.avg);
-        document.getElementById('tableBody').innerHTML = moduleData.pairs.map((p, i) => `
-            <tr>
-                <td class="col-idx">${i+1}</td>
-                <td>${p.reqTime}</td>
-                <td>${p.resTime}</td>
-                <td class="col-dur ${p.duration > (activeModule==='getitem'?3000:8000)?'slow-danger':''}">${p.duration.toLocaleString()}</td>
-            </tr>
-        `).join('');
+        document.getElementById('tableBody').innerHTML = moduleData.pairs.length > 0 
+            ? moduleData.pairs.map((p, i) => `<tr class="${p.duration > (activeModule==='getitem'?3000:8000)?'slow-danger':''}"><td>${i+1}</td><td>${p.reqTime}</td><td>${p.resTime}</td><td style="text-align:right"><strong>${p.duration.toLocaleString()}</strong></td></tr>`).join('')
+            : '<tr><td colspan="4" style="text-align:center; padding:20px;">ไม่พบชุดข้อมูลในหมวดหมู่นี้</td></tr>';
 
         updateChart(moduleData.pairs);
         renderTabs();
@@ -270,58 +257,29 @@
 
     async function exportEverything() {
         const workbook = new ExcelJS.Workbook();
-        const canvas = document.getElementById('responseChart');
-        const ratio = canvas.height / canvas.width;
-
         for (const f of allFilesData) {
             const sheet = workbook.addWorksheet(f.fileName.substring(0,31));
-            
-            // Layout Excel: Section 1 (Getitem) & Section 2 (Ticket)
             sheet.mergeCells('A1:E2');
-            const title = sheet.getCell('A1');
-            title.value = `PERFORMANCE REPORT: ${f.fileName}`;
-            title.font = { bold: true, size: 14, color: { argb: 'FFFFFFFF'} };
-            title.fill = { type: 'pattern', pattern:'solid', fgColor:{ argb: 'FF1A73E8'}};
-            title.alignment = { horizontal: 'center', vertical: 'middle' };
+            sheet.getCell('A1').value = `REPORT: ${f.fileName}`;
+            sheet.getCell('A1').font = { bold: true, color:{argb:'FFFFFFFF'} };
+            sheet.getCell('A1').fill = { type:'pattern', pattern:'solid', fgColor:{argb:'FF1A73E8'} };
+            
+            // Layout สรุป 2 Module คู่กัน
+            sheet.getCell('A4').value = 'GETITEM STATS'; sheet.getCell('A4').font = {bold:true};
+            sheet.getCell('A5').value = 'AVG: ' + f.getitem.avg;
+            sheet.getCell('A6').value = 'TOTAL: ' + f.getitem.total;
 
-            // --- GETITEM SECTION ---
-            sheet.getCell('A4').value = 'GETITEM ANALYSIS'; sheet.getCell('A4').font = {bold:true, size:12};
-            const gStats = [['AVG', f.getitem.avg], ['MIN', f.getitem.min], ['MAX', f.getitem.max], ['TOTAL', f.getitem.total]];
-            gStats.forEach((s, i) => { sheet.getCell(`A${5+i}`).value = s[0]; sheet.getCell(`B${5+i}`).value = s[1]; });
+            sheet.getCell('D4').value = 'TICKET PRINT STATS'; sheet.getCell('D4').font = {bold:true};
+            sheet.getCell('D5').value = 'AVG: ' + f.ticket.avg;
+            sheet.getCell('D6').value = 'TOTAL: ' + f.ticket.total;
+            sheet.getCell('D7').value = 'EDC ERRORS: ' + f.ticket.errors;
 
-            // --- TICKET SECTION ---
-            sheet.getCell('D4').value = 'TICKET PRINT ANALYSIS'; sheet.getCell('D4').font = {bold:true, size:12};
-            const tStats = [['AVG', f.ticket.avg], ['MIN', f.ticket.min], ['MAX', f.ticket.max], ['TOTAL', f.ticket.total], ['ERRORS', f.ticket.errors]];
-            tStats.forEach((s, i) => { sheet.getCell(`D${5+i}`).value = s[0]; sheet.getCell(`E${5+i}`).value = s[1]; });
-
-            // Chart
-            updateChart(f.getitem.pairs);
-            const imgG = workbook.addImage({ base64: canvas.toDataURL(), extension: 'png' });
-            sheet.addImage(imgG, { tl: { col: 0, row: 11 }, ext: { width: 400, height: 400*ratio } });
-
-            updateChart(f.ticket.pairs);
-            const imgT = workbook.addImage({ base64: canvas.toDataURL(), extension: 'png' });
-            sheet.addImage(imgT, { tl: { col: 3, row: 11 }, ext: { width: 400, height: 400*ratio } });
-
-            // Raw Data
-            const rowStart = 25;
-            const hRow = sheet.getRow(rowStart);
-            hRow.values = ['No.', 'Module', 'Request Timestamp', 'Response Timestamp', 'Duration (ms)'];
-            hRow.eachCell(c => { c.font={bold:true, color:{argb:'FFFFFFFF'}}; c.fill={type:'pattern', pattern:'solid', fgColor:{argb:'FF1A73E8'}}; });
-
-            f.getitem.pairs.forEach((p, i) => {
-                sheet.addRow([i+1, 'Getitem', p.reqTime, p.resTime, p.duration]);
-            });
-            f.ticket.pairs.forEach((p, i) => {
-                sheet.addRow([i+1, 'Ticket', p.reqTime, p.resTime, p.duration]);
-            });
-
-            sheet.getColumn(3).width = 25; sheet.getColumn(4).width = 25;
+            sheet.getRow(10).values = ['No.', 'Module', 'Start', 'End', 'Duration (ms)'];
+            f.getitem.pairs.forEach((p, i) => sheet.addRow([i+1, 'Getitem', p.reqTime, p.resTime, p.duration]));
+            f.ticket.pairs.forEach((p, i) => sheet.addRow([i+1, 'Ticket', p.reqTime, p.resTime, p.duration]));
         }
-
         const buffer = await workbook.xlsx.writeBuffer();
-        saveAs(new Blob([buffer]), `Full_Performance_Analysis.xlsx`);
-        switchModule(activeModule);
+        saveAs(new Blob([buffer]), `Performance_V9_1.xlsx`);
     }
 </script>
 </body>
