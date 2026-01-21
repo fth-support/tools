@@ -2,7 +2,7 @@
 <html lang="th">
 <head>
     <meta charset="UTF-8">
-    <title>Log Analyzer V5.0 - Professional Excel Dashboard</title>
+    <title>Log Analyzer V5.1 - Full Dashboard Excel</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.3.0/exceljs.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
@@ -24,16 +24,15 @@
             border-radius: 4px; cursor: pointer; font-weight: bold; margin-left: 10px;
             box-shadow: 0 2px 4px rgba(0,0,0,0.2);
         }
-        .export-btn:hover { background: #145a32; }
 
         .sticky-top-area { position: sticky; top: 60px; z-index: 1000; background: white; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
         .stats-bar, .sla-bar { display: flex; border-bottom: 1px solid #eee; }
-        .chart-bar { padding: 10px 20px; height: 200px; }
+        .chart-bar { padding: 10px 20px; height: 180px; }
 
-        .card-stat { text-align: center; flex: 1; padding: 10px 5px; border-right: 1px solid #eee; }
+        .card-stat { text-align: center; flex: 1; padding: 8px 5px; border-right: 1px solid #eee; }
         .card-stat:last-child { border-right: none; }
         .card-stat small { display: block; color: #666; font-size: 0.7em; font-weight: bold; text-transform: uppercase; }
-        .card-stat strong { font-size: 1.2em; color: var(--primary-color); }
+        .card-stat strong { font-size: 1.15em; color: var(--primary-color); }
 
         .container { width: 100%; margin: 0; padding: 0; }
         table { width: 100%; border-collapse: collapse; table-layout: fixed; background: white; }
@@ -55,9 +54,9 @@
 <body>
 
 <div class="header-upload">
-    <strong>Log Analyzer V5.0</strong> | 
+    <strong>Log Analyzer V5.1</strong> | 
     <input type="file" id="fileInput" accept=".log,.txt">
-    <button id="exportBtn" class="export-btn" style="display:none;" onclick="exportToExcelPro()">✨ Export Dashboard to Excel</button>
+    <button id="exportBtn" class="export-btn" style="display:none;" onclick="exportToExcelPro()">✨ Export Report to Excel</button>
 </div>
 
 <div id="mainContent" style="display:none;">
@@ -83,7 +82,7 @@
     <div class="container">
         <table id="logTable">
             <thead>
-                <tr id="tableHeaderRow">
+                <tr>
                     <th class="col-idx">ชุดที่</th>
                     <th class="col-req">เวลา Request</th>
                     <th class="col-res">เวลา Response</th>
@@ -111,11 +110,7 @@
         const numbers = line.match(/\d+/g);
         if (numbers && numbers.length >= 7) {
             const [y, m, d, hh, mm, ss, ms] = numbers;
-            return {
-                dateObj: new Date(y, m-1, d, hh, mm, ss, ms),
-                hour: hh,
-                formatted: `${y}-${m}-${d} ${hh}:${mm}:${ss},${ms}`
-            };
+            return { dateObj: new Date(y, m-1, d, hh, mm, ss, ms), hour: hh, formatted: `${y}-${m}-${d} ${hh}:${mm}:${ss},${ms}` };
         }
         return null;
     }
@@ -138,11 +133,8 @@
             }
         });
 
-        if (pairs.length > 0) {
-            currentData = pairs;
-            renderUI(pairs);
-            document.getElementById('exportBtn').style.display = 'inline-block';
-        } else alert("ไม่พบข้อมูล");
+        if (pairs.length > 0) { currentData = pairs; renderUI(pairs); document.getElementById('exportBtn').style.display = 'inline-block'; }
+        else alert("ไม่พบข้อมูล");
     }
 
     function renderUI(data) {
@@ -156,16 +148,16 @@
         document.getElementById('maxVal').innerText = Math.max(...durations).toLocaleString();
         document.getElementById('totalCount').innerText = total.toLocaleString();
 
-        const groups = [
-            data.filter(d => d.duration < 1000),
-            data.filter(d => d.duration >= 1000 && d.duration < 1500),
-            data.filter(d => d.duration >= 1500 && d.duration < 2000),
-            data.filter(d => d.duration >= 2000 && d.duration < 3000),
-            data.filter(d => d.duration >= 3000)
-        ];
+        const limits = [1000, 1500, 2000, 3000];
+        const g1 = data.filter(d => d.duration < 1000).length;
+        const g2 = data.filter(d => d.duration >= 1000 && d.duration < 1500).length;
+        const g3 = data.filter(d => d.duration >= 1500 && d.duration < 2000).length;
+        const g4 = data.filter(d => d.duration >= 2000 && d.duration < 3000).length;
+        const g5 = data.filter(d => d.duration >= 3000).length;
 
-        groups.forEach((g, i) => {
-            document.getElementById(`s${i+1}`).innerText = `${((g.length/total)*100).toFixed(1)}% (${g.length})`;
+        const counts = [g1, g2, g3, g4, g5];
+        counts.forEach((count, i) => {
+            document.getElementById(`s${i+1}`).innerText = `${((count/total)*100).toFixed(1)}% (${count})`;
         });
 
         const tbody = document.getElementById('tableBody');
@@ -186,67 +178,80 @@
 
     function updateChart(data) {
         const hourly = {};
-        data.forEach(d => {
-            if (!hourly[d.hour]) hourly[d.hour] = { sum: 0, count: 0 };
-            hourly[d.hour].sum += d.duration;
-            hourly[d.hour].count++;
-        });
+        data.forEach(d => { if (!hourly[d.hour]) hourly[d.hour] = { sum: 0, count: 0 }; hourly[d.hour].sum += d.duration; hourly[d.hour].count++; });
         const labels = Object.keys(hourly).sort().map(h => h + ":00");
         const vals = Object.keys(hourly).sort().map(h => (hourly[h].sum / hourly[h].count).toFixed(1));
         const ctx = document.getElementById('responseChart').getContext('2d');
         if (myChart) myChart.destroy();
         myChart = new Chart(ctx, {
             type: 'line',
-            data: {
-                labels: labels,
-                datasets: [{ label: 'Latency (ms)', data: vals, borderColor: '#1a73e8', backgroundColor: 'rgba(26, 115, 232, 0.1)', fill: true, tension: 0.3 }]
-            },
+            data: { labels: labels, datasets: [{ label: 'Avg Latency (ms)', data: vals, borderColor: '#1a73e8', backgroundColor: 'rgba(26, 115, 232, 0.1)', fill: true, tension: 0.3 }] },
             options: { responsive: true, maintainAspectRatio: false }
         });
     }
 
     async function exportToExcelPro() {
         const workbook = new ExcelJS.Workbook();
-        const sheet = workbook.addWorksheet('Response Dashboard');
+        const sheet = workbook.addWorksheet('Performance Report');
 
-        // 1. ตั้งค่าหัวเรื่อง
+        // Title
         sheet.mergeCells('A1:D2');
         const titleCell = sheet.getCell('A1');
-        titleCell.value = 'GETITEM PERFORMANCE DASHBOARD';
-        titleCell.font = { name: 'Segoe UI', size: 16, bold: true, color: { argb: 'FFFFFFFF' } };
+        titleCell.value = 'GETITEM PERFORMANCE ANALYSIS';
+        titleCell.font = { size: 16, bold: true, color: { argb: 'FFFFFFFF' } };
         titleCell.alignment = { vertical: 'middle', horizontal: 'center' };
         titleCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF1A73E8' } };
 
-        // 2. ใส่ KPI Cards (Summary)
+        // 1. KPI Stats Summary
+        sheet.getCell('A4').value = 'OVERALL SUMMARY';
+        sheet.getCell('A4').font = { bold: true, size: 12 };
+        
         const stats = [
-            ['AVERAGE', document.getElementById('avgVal').innerText + ' ms'],
-            ['MINIMUM', document.getElementById('minVal').innerText + ' ms'],
-            ['MAXIMUM', document.getElementById('maxVal').innerText + ' ms'],
-            ['TOTAL SAMPLES', document.getElementById('totalCount').innerText]
+            ['Total Requests', currentData.length],
+            ['Average Response', parseFloat(document.getElementById('avgVal').innerText)],
+            ['Minimum Time', parseInt(document.getElementById('minVal').innerText.replace(/,/g,''))],
+            ['Maximum Time', parseInt(document.getElementById('maxVal').innerText.replace(/,/g,''))]
+        ];
+        stats.forEach((s, i) => {
+            const row = sheet.getRow(5 + i);
+            row.getCell(1).value = s[0];
+            row.getCell(2).value = s[1];
+            row.getCell(1).font = { bold: true };
+        });
+
+        // 2. SLA BREAKDOWN (เพิ่มส่วนนี้)
+        sheet.getCell('D4').value = 'SLA BREAKDOWN';
+        sheet.getCell('D4').font = { bold: true, size: 12 };
+        
+        const total = currentData.length;
+        const slaData = [
+            { label: '< 1000ms', count: currentData.filter(d=>d.duration < 1000).length, color: 'FF1E8E3E' },
+            { label: '1000-1500ms', count: currentData.filter(d=>d.duration >= 1000 && d.duration < 1500).length, color: 'FF03A9F4' },
+            { label: '1500-2000ms', count: currentData.filter(d=>d.duration >= 1500 && d.duration < 2000).length, color: 'FF673AB7' },
+            { label: '2000-3000ms', count: currentData.filter(d=>d.duration >= 2000 && d.duration < 3000).length, color: 'FFF57C00' },
+            { label: '> 3000ms', count: currentData.filter(d=>d.duration >= 3000).length, color: 'FFD93025' }
         ];
 
-        stats.forEach((stat, i) => {
-            const rowIdx = 4 + i;
-            sheet.getCell(`A${rowIdx}`).value = stat[0];
-            sheet.getCell(`B${rowIdx}`).value = stat[1];
-            sheet.getCell(`A${rowIdx}`).font = { bold: true };
-            sheet.getCell(`B${rowIdx}`).alignment = { horizontal: 'right' };
+        slaData.forEach((item, i) => {
+            const row = sheet.getRow(5 + i);
+            const labelCell = row.getCell(4);
+            const valCell = row.getCell(5);
+            
+            labelCell.value = item.label;
+            valCell.value = `${((item.count/total)*100).toFixed(1)}% (${item.count})`;
+            
+            labelCell.font = { color: { argb: 'FFFFFFFF' }, bold: true };
+            labelCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: item.color } };
+            valCell.border = { bottom: {style:'thin'}, right: {style:'thin'} };
         });
 
-        // 3. ใส่รูปกราฟจากหน้าเว็บ
-        const canvas = document.getElementById('responseChart');
-        const chartImage = canvas.toDataURL('image/png');
-        const imageId = workbook.addImage({
-            base64: chartImage,
-            extension: 'png',
-        });
-        sheet.addImage(imageId, {
-            tl: { col: 0, row: 9 },
-            ext: { width: 600, height: 250 }
-        });
+        // 3. Chart Image
+        const chartImage = document.getElementById('responseChart').toDataURL('image/png');
+        const imageId = workbook.addImage({ base64: chartImage, extension: 'png' });
+        sheet.addImage(imageId, { tl: { col: 0, row: 11 }, ext: { width: 600, height: 220 } });
 
-        // 4. ส่วนของ Raw Data
-        const startRow = 23;
+        // 4. Raw Data Header
+        const startRow = 24;
         sheet.getCell(`A${startRow}`).value = 'RAW DATA DETAILS';
         sheet.getCell(`A${startRow}`).font = { bold: true, size: 12 };
 
@@ -255,24 +260,22 @@
         headerRow.eachCell(cell => {
             cell.font = { bold: true, color: { argb: 'FFFFFFFF' } };
             cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF1A73E8' } };
-            cell.border = { top: {style:'thin'}, left: {style:'thin'}, bottom: {style:'thin'}, right: {style:'thin'} };
         });
 
         currentData.forEach((d, i) => {
             const row = sheet.addRow([i + 1, d.reqTime, d.resTime, d.duration]);
-            const durCell = row.getCell(4);
-            if (d.duration >= 3000) durCell.font = { color: { argb: 'FFFF0000' }, bold: true };
-            else if (d.duration >= 2000) durCell.font = { color: { argb: 'FFF57C00' }, bold: true };
+            if (d.duration >= 3000) row.getCell(4).font = { color: { argb: 'FFFF0000' }, bold: true };
+            else if (d.duration >= 2000) row.getCell(4).font = { color: { argb: 'FFF57C00' }, bold: true };
         });
 
-        // ปรับความกว้างคอลัมน์
         sheet.getColumn(1).width = 10;
-        sheet.getColumn(2).width = 30;
-        sheet.getColumn(3).width = 30;
-        sheet.getColumn(4).width = 20;
+        sheet.getColumn(2).width = 28;
+        sheet.getColumn(3).width = 28;
+        sheet.getColumn(4).width = 18;
+        sheet.getColumn(5).width = 20;
 
         const buffer = await workbook.xlsx.writeBuffer();
-        saveAs(new Blob([buffer]), `Performance_Dashboard_${new Date().getTime()}.xlsx`);
+        saveAs(new Blob([buffer]), `Performance_Report_${new Date().getTime()}.xlsx`);
     }
 
     window.addEventListener('resize', recalcSticky);
