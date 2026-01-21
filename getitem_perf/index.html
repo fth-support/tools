@@ -2,7 +2,7 @@
 <html lang="th">
 <head>
     <meta charset="UTF-8">
-    <title>Log Analyzer V5.1 - Full Dashboard Excel</title>
+    <title>Log Analyzer V5.2 - Premium Dashboard UI</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.3.0/exceljs.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
@@ -11,81 +11,96 @@
             --primary-color: #1a73e8;
             --bg-color: #f8f9fa;
             --success: #1e8e3e;
+            --success-bg: #e6f4ea;
             --info: #03a9f4;
+            --info-bg: #e1f5fe;
             --normal: #673ab7;
+            --normal-bg: #f3e5f5;
             --warning: #f57c00;
+            --warning-bg: #fff3e0;
             --danger: #d93025;
+            --danger-bg: #fce8e6;
         }
-        body { font-family: 'Segoe UI', Tahoma, sans-serif; background-color: var(--bg-color); margin: 0; padding: 0; }
+        body { font-family: 'Segoe UI', Tahoma, sans-serif; background-color: var(--bg-color); margin: 0; padding: 0; overflow-x: hidden; }
         
         .header-upload { background: white; padding: 15px; text-align: center; border-bottom: 1px solid #ddd; position: sticky; top: 0; z-index: 1100; }
-        .export-btn { 
-            background: #1d6f42; color: white; border: none; padding: 8px 18px; 
-            border-radius: 4px; cursor: pointer; font-weight: bold; margin-left: 10px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
-        }
+        .export-btn { background: #1d6f42; color: white; border: none; padding: 8px 18px; border-radius: 4px; cursor: pointer; font-weight: bold; margin-left: 10px; }
 
-        .sticky-top-area { position: sticky; top: 60px; z-index: 1000; background: white; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
-        .stats-bar, .sla-bar { display: flex; border-bottom: 1px solid #eee; }
+        .sticky-top-area { position: sticky; top: 60px; z-index: 1000; background: white; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+        
+        /* สไตล์ใหม่สำหรับ KPI Stats Bar */
+        .stats-bar { display: flex; gap: 10px; padding: 10px; border-bottom: 1px solid #eee; background: #fff; }
+        .card-stat { 
+            flex: 1; 
+            padding: 12px 5px; 
+            border-radius: 8px; 
+            text-align: center; 
+            min-width: 120px; /* ป้องกันตัวอักษรหาย */
+            transition: transform 0.2s;
+        }
+        .card-stat small { display: block; font-size: 0.75em; font-weight: 700; margin-bottom: 4px; text-transform: uppercase; }
+        .card-stat strong { font-size: 1.4em; }
+
+        /* สีพิเศษสำหรับแต่ละ Card */
+        .stat-avg { background: var(--info-bg); color: #01579b; border: 1px solid #b3e5fc; }
+        .stat-min { background: var(--success-bg); color: #1b5e20; border: 1px solid #c8e6c9; }
+        .stat-max { background: var(--danger-bg); color: #b71c1c; border: 1px solid #ffcdd2; }
+        .stat-total { background: #f1f3f4; color: #3c4043; border: 1px solid #dadce0; }
+
+        .sla-bar { display: flex; gap: 5px; padding: 10px; background: #fff; border-bottom: 2px solid var(--primary-color); overflow-x: auto; }
+        .sla-card { flex: 1; padding: 8px 2px; border-radius: 4px; text-align: center; min-width: 100px; font-size: 0.85em; }
+
         .chart-bar { padding: 10px 20px; height: 180px; }
 
-        .card-stat { text-align: center; flex: 1; padding: 8px 5px; border-right: 1px solid #eee; }
-        .card-stat:last-child { border-right: none; }
-        .card-stat small { display: block; color: #666; font-size: 0.7em; font-weight: bold; text-transform: uppercase; }
-        .card-stat strong { font-size: 1.15em; color: var(--primary-color); }
-
-        .container { width: 100%; margin: 0; padding: 0; }
+        /* ตารางแบบ Responsive */
+        .container { width: 100%; margin: 0; }
         table { width: 100%; border-collapse: collapse; table-layout: fixed; background: white; }
+        thead th { background: var(--primary-color); color: white; position: sticky; z-index: 999; padding: 12px 15px; text-align: left; }
+        td { padding: 12px 15px; border-bottom: 1px solid #eee; font-size: 0.9em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         
-        thead th { 
-            background: var(--primary-color); color: white; position: sticky; 
-            z-index: 999; padding: 12px 15px; text-align: left; font-size: 0.9em;
-        }
-
-        td { padding: 10px 15px; border-bottom: 1px solid #eee; font-size: 0.9em; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-        .col-idx { width: 60px; text-align: center; }
+        .col-idx { width: 70px; text-align: center; }
         .col-req, .col-res { width: 35%; }
-        .col-dur { width: 20%; text-align: right; }
+        .col-dur { width: 20%; text-align: right; font-weight: 600; }
         
-        .slow-warn { color: var(--warning); font-weight: bold; }
-        .slow-danger { color: var(--danger); font-weight: bold; }
+        .slow-warn { background: var(--warning-bg); color: var(--warning); }
+        .slow-danger { background: var(--danger-bg); color: var(--danger); }
     </style>
 </head>
 <body>
 
 <div class="header-upload">
-    <strong>Log Analyzer V5.1</strong> | 
+    <strong>Log Analyzer V5.2</strong> | 
     <input type="file" id="fileInput" accept=".log,.txt">
-    <button id="exportBtn" class="export-btn" style="display:none;" onclick="exportToExcelPro()">✨ Export Report to Excel</button>
+    <button id="exportBtn" class="export-btn" style="display:none;" onclick="exportToExcelPro()">✨ Export Professional Report</button>
 </div>
 
 <div id="mainContent" style="display:none;">
     <div class="sticky-top-area" id="stickyArea">
         <div class="stats-bar">
-            <div class="card-stat"><small>เฉลี่ย (AVG)</small><strong id="avgVal">-</strong> ms</div>
-            <div class="card-stat"><small>เร็วสุด (MIN)</small><strong id="minVal" style="color: var(--success);">-</strong> ms</div>
-            <div class="card-stat"><small>ช้าสุด (MAX)</small><strong id="maxVal" style="color: var(--danger);">-</strong> ms</div>
-            <div class="card-stat"><small>ทั้งหมด</small><strong id="totalCount">-</strong> ชุด</div>
+            <div class="card-stat stat-avg"><small>ค่าเฉลี่ย (AVG)</small><strong id="avgVal">-</strong> <small style="display:inline">ms</small></div>
+            <div class="card-stat stat-min"><small>เร็วสุด (MIN)</small><strong id="minVal">-</strong> <small style="display:inline">ms</small></div>
+            <div class="card-stat stat-max"><small>ช้าสุด (MAX)</small><strong id="maxVal">-</strong> <small style="display:inline">ms</small></div>
+            <div class="card-stat stat-total"><small>จำนวนรวม</small><strong id="totalCount">-</strong> <small style="display:inline">ชุด</small></div>
         </div>
+        
         <div class="sla-bar" id="slaBarArea">
-            <div class="card-stat"><small>< 1s</small><strong id="s1" style="color: var(--success);">-</strong></div>
-            <div class="card-stat"><small>1 - 1.5s</small><strong id="s2" style="color: var(--info);">-</strong></div>
-            <div class="card-stat"><small>1.5 - 2s</small><strong id="s3" style="color: var(--normal);">-</strong></div>
-            <div class="card-stat"><small>2 - 3s</small><strong id="s4" style="color: var(--warning);">-</strong></div>
-            <div class="card-stat"><small>> 3s</small><strong id="s5" style="color: var(--danger);">-</strong></div>
+            <div class="sla-card" style="background:var(--success-bg); color:var(--success); border:1px solid #c8e6c9;"><small>< 1s</small><strong id="s1">-</strong></div>
+            <div class="sla-card" style="background:var(--info-bg); color:var(--info); border:1px solid #b3e5fc;"><small>1 - 1.5s</small><strong id="s2">-</strong></div>
+            <div class="sla-card" style="background:var(--normal-bg); color:var(--normal); border:1px solid #e1bee7;"><small>1.5 - 2s</small><strong id="s3">-</strong></div>
+            <div class="sla-card" style="background:var(--warning-bg); color:var(--warning); border:1px solid #ffe0b2;"><small>2 - 3s</small><strong id="s4">-</strong></div>
+            <div class="sla-card" style="background:var(--danger-bg); color:var(--danger); border:1px solid #ffcdd2;"><small>> 3s</small><strong id="s5">-</strong></div>
         </div>
-        <div class="chart-bar">
-            <canvas id="responseChart"></canvas>
-        </div>
+
+        <div class="chart-bar"><canvas id="responseChart"></canvas></div>
     </div>
 
     <div class="container">
-        <table id="logTable">
+        <table>
             <thead>
                 <tr>
-                    <th class="col-idx">ชุดที่</th>
-                    <th class="col-req">เวลา Request</th>
-                    <th class="col-res">เวลา Response</th>
+                    <th class="col-idx">#</th>
+                    <th class="col-req">Request Timestamp</th>
+                    <th class="col-res">Response Timestamp</th>
                     <th class="col-dur">Duration (ms)</th>
                 </tr>
             </thead>
@@ -148,17 +163,14 @@
         document.getElementById('maxVal').innerText = Math.max(...durations).toLocaleString();
         document.getElementById('totalCount').innerText = total.toLocaleString();
 
-        const limits = [1000, 1500, 2000, 3000];
-        const g1 = data.filter(d => d.duration < 1000).length;
-        const g2 = data.filter(d => d.duration >= 1000 && d.duration < 1500).length;
-        const g3 = data.filter(d => d.duration >= 1500 && d.duration < 2000).length;
-        const g4 = data.filter(d => d.duration >= 2000 && d.duration < 3000).length;
-        const g5 = data.filter(d => d.duration >= 3000).length;
-
-        const counts = [g1, g2, g3, g4, g5];
-        counts.forEach((count, i) => {
-            document.getElementById(`s${i+1}`).innerText = `${((count/total)*100).toFixed(1)}% (${count})`;
-        });
+        const g = [
+            data.filter(d => d.duration < 1000).length,
+            data.filter(d => d.duration >= 1000 && d.duration < 1500).length,
+            data.filter(d => d.duration >= 1500 && d.duration < 2000).length,
+            data.filter(d => d.duration >= 2000 && d.duration < 3000).length,
+            data.filter(d => d.duration >= 3000).length
+        ];
+        g.forEach((count, i) => { document.getElementById(`s${i+1}`).innerText = `${((count/total)*100).toFixed(1)}% (${count})`; });
 
         const tbody = document.getElementById('tableBody');
         tbody.innerHTML = data.map((d, i) => {
@@ -171,9 +183,8 @@
     }
 
     function recalcSticky() {
-        const stickyArea = document.getElementById('stickyArea');
-        const ths = document.querySelectorAll('thead th');
-        if (stickyArea) ths.forEach(th => th.style.top = (stickyArea.offsetHeight + 60 - 1) + 'px');
+        const h = document.getElementById('stickyArea').offsetHeight;
+        document.querySelectorAll('thead th').forEach(th => th.style.top = (h + 60 - 1) + 'px');
     }
 
     function updateChart(data) {
@@ -192,9 +203,7 @@
 
     async function exportToExcelPro() {
         const workbook = new ExcelJS.Workbook();
-        const sheet = workbook.addWorksheet('Performance Report');
-
-        // Title
+        const sheet = workbook.addWorksheet('Report');
         sheet.mergeCells('A1:D2');
         const titleCell = sheet.getCell('A1');
         titleCell.value = 'GETITEM PERFORMANCE ANALYSIS';
@@ -202,80 +211,26 @@
         titleCell.alignment = { vertical: 'middle', horizontal: 'center' };
         titleCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF1A73E8' } };
 
-        // 1. KPI Stats Summary
-        sheet.getCell('A4').value = 'OVERALL SUMMARY';
-        sheet.getCell('A4').font = { bold: true, size: 12 };
-        
-        const stats = [
-            ['Total Requests', currentData.length],
-            ['Average Response', parseFloat(document.getElementById('avgVal').innerText)],
-            ['Minimum Time', parseInt(document.getElementById('minVal').innerText.replace(/,/g,''))],
-            ['Maximum Time', parseInt(document.getElementById('maxVal').innerText.replace(/,/g,''))]
-        ];
-        stats.forEach((s, i) => {
-            const row = sheet.getRow(5 + i);
-            row.getCell(1).value = s[0];
-            row.getCell(2).value = s[1];
-            row.getCell(1).font = { bold: true };
-        });
+        // Stats in Excel
+        const stats = [['AVG', document.getElementById('avgVal').innerText], ['MIN', document.getElementById('minVal').innerText], ['MAX', document.getElementById('maxVal').innerText], ['TOTAL', currentData.length]];
+        stats.forEach((s, i) => { sheet.getCell(`A${4+i}`).value = s[0]; sheet.getCell(`B${4+i}`).value = s[1]; sheet.getCell(`A${4+i}`).font = {bold:true}; });
 
-        // 2. SLA BREAKDOWN (เพิ่มส่วนนี้)
-        sheet.getCell('D4').value = 'SLA BREAKDOWN';
-        sheet.getCell('D4').font = { bold: true, size: 12 };
-        
-        const total = currentData.length;
-        const slaData = [
-            { label: '< 1000ms', count: currentData.filter(d=>d.duration < 1000).length, color: 'FF1E8E3E' },
-            { label: '1000-1500ms', count: currentData.filter(d=>d.duration >= 1000 && d.duration < 1500).length, color: 'FF03A9F4' },
-            { label: '1500-2000ms', count: currentData.filter(d=>d.duration >= 1500 && d.duration < 2000).length, color: 'FF673AB7' },
-            { label: '2000-3000ms', count: currentData.filter(d=>d.duration >= 2000 && d.duration < 3000).length, color: 'FFF57C00' },
-            { label: '> 3000ms', count: currentData.filter(d=>d.duration >= 3000).length, color: 'FFD93025' }
-        ];
-
-        slaData.forEach((item, i) => {
-            const row = sheet.getRow(5 + i);
-            const labelCell = row.getCell(4);
-            const valCell = row.getCell(5);
-            
-            labelCell.value = item.label;
-            valCell.value = `${((item.count/total)*100).toFixed(1)}% (${item.count})`;
-            
-            labelCell.font = { color: { argb: 'FFFFFFFF' }, bold: true };
-            labelCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: item.color } };
-            valCell.border = { bottom: {style:'thin'}, right: {style:'thin'} };
-        });
-
-        // 3. Chart Image
         const chartImage = document.getElementById('responseChart').toDataURL('image/png');
-        const imageId = workbook.addImage({ base64: chartImage, extension: 'png' });
-        sheet.addImage(imageId, { tl: { col: 0, row: 11 }, ext: { width: 600, height: 220 } });
+        sheet.addImage(workbook.addImage({ base64: chartImage, extension: 'png' }), { tl: { col: 0, row: 9 }, ext: { width: 600, height: 200 } });
 
-        // 4. Raw Data Header
-        const startRow = 24;
-        sheet.getCell(`A${startRow}`).value = 'RAW DATA DETAILS';
-        sheet.getCell(`A${startRow}`).font = { bold: true, size: 12 };
-
-        const headerRow = sheet.getRow(startRow + 1);
-        headerRow.values = ['No.', 'Request Timestamp', 'Response Timestamp', 'Duration (ms)'];
-        headerRow.eachCell(cell => {
-            cell.font = { bold: true, color: { argb: 'FFFFFFFF' } };
-            cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF1A73E8' } };
-        });
+        const startRow = 22;
+        const headerRow = sheet.getRow(startRow);
+        headerRow.values = ['No.', 'Request', 'Response', 'Duration (ms)'];
+        headerRow.eachCell(c => { c.font={bold:true, color:{argb:'FFFFFFFF'}}; c.fill={type:'pattern', pattern:'solid', fgColor:{argb:'FF1A73E8'}}; });
 
         currentData.forEach((d, i) => {
             const row = sheet.addRow([i + 1, d.reqTime, d.resTime, d.duration]);
             if (d.duration >= 3000) row.getCell(4).font = { color: { argb: 'FFFF0000' }, bold: true };
-            else if (d.duration >= 2000) row.getCell(4).font = { color: { argb: 'FFF57C00' }, bold: true };
         });
 
-        sheet.getColumn(1).width = 10;
-        sheet.getColumn(2).width = 28;
-        sheet.getColumn(3).width = 28;
-        sheet.getColumn(4).width = 18;
-        sheet.getColumn(5).width = 20;
-
+        sheet.getColumn(2).width = 28; sheet.getColumn(3).width = 28;
         const buffer = await workbook.xlsx.writeBuffer();
-        saveAs(new Blob([buffer]), `Performance_Report_${new Date().getTime()}.xlsx`);
+        saveAs(new Blob([buffer]), `Performance_Report.xlsx`);
     }
 
     window.addEventListener('resize', recalcSticky);
