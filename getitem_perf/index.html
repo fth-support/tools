@@ -2,7 +2,7 @@
 <html lang="th">
 <head>
     <meta charset="UTF-8">
-    <title>Log Analyzer V8.1 - Improved Tab Position</title>
+    <title>Log Analyzer V9.0 - Multi-Module Performance</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.3.0/exceljs.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
@@ -17,46 +17,43 @@
         }
         body { font-family: 'Segoe UI', Tahoma, sans-serif; background-color: var(--bg-color); margin: 0; padding: 0; }
         
-        .header-upload { background: white; padding: 15px; text-align: center; border-bottom: 1px solid #ddd; position: sticky; top: 0; z-index: 1100; }
-        .export-btn { background: #1d6f42; color: white; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer; font-weight: bold; margin-left: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
+        /* Header & Navigation */
+        .header-upload { background: white; padding: 15px; text-align: center; border-bottom: 1px solid #ddd; position: sticky; top: 0; z-index: 1200; }
+        .main-nav { display: flex; justify-content: center; background: #2c3e50; padding: 10px 0; gap: 20px; position: sticky; top: 60px; z-index: 1100; }
+        .nav-item { color: #bdc3c7; cursor: pointer; font-weight: bold; padding: 5px 15px; border-radius: 20px; transition: 0.3s; }
+        .nav-item.active { color: white; background: var(--primary-color); }
 
-        /* ส่วน Dashboard ที่จะค้างอยู่ด้านบน */
-        .sticky-top-area { position: sticky; top: 60px; z-index: 1000; background: white; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+        .tab-container { 
+            display: flex; overflow-x: auto; background: #fff; padding: 10px 10px 0 10px; gap: 4px;
+            position: sticky; top: 105px; z-index: 1050; border-bottom: 1px solid #ccc;
+        }
+        .tab-btn {
+            padding: 8px 16px; border: 1px solid #ccc; border-bottom: none; background: #f1f3f4;
+            border-radius: 8px 8px 0 0; cursor: pointer; font-size: 0.85em; white-space: nowrap;
+        }
+        .tab-btn.active { background: white; font-weight: bold; border-top: 3px solid var(--primary-color); }
+
+        .export-btn { background: #1d6f42; color: white; border: none; padding: 8px 15px; border-radius: 4px; cursor: pointer; font-weight: bold; margin-left: 10px; }
+
+        /* Dashboard Area */
+        .sticky-top-area { position: sticky; top: 144px; z-index: 1000; background: white; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
         .stats-bar, .sla-bar { display: flex; gap: 8px; padding: 10px; border-bottom: 1px solid #eee; }
         
-        /* สไตล์ Dashboard Cards */
-        .card-stat { flex: 1; padding: 12px 5px; border-radius: 8px; text-align: center; border: 1px solid #dadce0; }
+        .card-stat { flex: 1; padding: 10px; border-radius: 8px; text-align: center; border: 1px solid #dadce0; }
         .card-stat small { display: block; font-size: 0.85em; font-weight: 700; margin-bottom: 4px; text-transform: uppercase; color: #5f6368; }
-        .card-stat strong { font-size: 1.8em; line-height: 1.2; display: block; }
+        .card-stat strong { font-size: 1.6em; line-height: 1.2; display: block; }
         
-        .stat-avg { background: var(--info-bg); color: #01579b; }
-        .stat-min { background: var(--success-bg); color: #1b5e20; }
-        .stat-max { background: var(--danger-bg); color: #b71c1c; }
-
-        /* SLA Labels ขนาดใหญ่ตาม V7 */
         .sla-card { flex: 1; padding: 10px 2px; border-radius: 6px; text-align: center; border: 1px solid #eee; }
         .sla-card small { display: block; font-size: 1.1em; font-weight: 800; margin-bottom: 5px; }
-        .sla-card strong { font-size: 1.4em; }
+        .sla-card strong { font-size: 1.3em; }
 
         .chart-bar { padding: 10px 20px; height: 160px; border-bottom: 1px solid #eee; }
 
-        /* ย้าย Tab มาไว้ตรงนี้ (เหนือหัวตาราง) */
-        .tab-container { 
-            display: flex; overflow-x: auto; background: #f1f3f4; padding: 8px 10px 0 10px; gap: 4px; border-bottom: 1px solid #ccc;
-        }
-        .tab-btn {
-            padding: 8px 16px; border: 1px solid #ccc; border-bottom: none; background: #e0e0e0;
-            border-radius: 6px 6px 0 0; cursor: pointer; font-size: 0.85em; white-space: nowrap; transition: 0.2s; color: #555;
-        }
-        .tab-btn.active { background: white; font-weight: bold; border-top: 3px solid var(--primary-color); color: var(--primary-color); }
-        .tab-btn:hover { background: #fff; }
-
-        /* ตาราง Raw Data */
+        /* Table Area */
         .container { width: 100%; }
         table { width: 100%; border-collapse: collapse; table-layout: fixed; background: white; }
         thead th { background: var(--primary-color); color: white; position: sticky; z-index: 999; padding: 12px 15px; text-align: left; }
         td { padding: 12px 15px; border-bottom: 1px solid #eee; font-size: 0.95em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        
         .col-idx { width: 70px; text-align: center; }
         .col-req, .col-res { width: 35%; }
         .col-dur { width: 20%; text-align: right; font-weight: 700; }
@@ -67,28 +64,23 @@
 <body>
 
 <div class="header-upload">
-    <strong>Log Analyzer V8.1</strong> | 
+    <strong>Log Analyzer V9.0 (Multi-Module)</strong> | 
     <input type="file" id="fileInput" accept=".log,.txt" multiple>
-    <button id="exportBtn" class="export-btn" style="display:none;" onclick="exportAllToExcel()">✨ Export All Sheets (Fixed Ratio)</button>
+    <button id="exportBtn" class="export-btn" style="display:none;" onclick="exportEverything()">✨ Export Multi-Module Excel</button>
 </div>
+
+<div id="moduleNav" class="main-nav" style="display:none;">
+    <div class="nav-item active" onclick="switchModule('getitem')">GETITEM PERFORMANCE</div>
+    <div class="nav-item" onclick="switchModule('ticket')">TICKET PRINT PERFORMANCE</div>
+</div>
+
+<div id="tabContainer" class="tab-container" style="display:none;"></div>
 
 <div id="mainContent" style="display:none;">
     <div class="sticky-top-area" id="stickyArea">
-        <div class="stats-bar">
-            <div class="card-stat stat-avg"><small>ค่าเฉลี่ย (AVG)</small><strong id="avgVal">-</strong></div>
-            <div class="card-stat stat-min"><small>เร็วสุด (MIN)</small><strong id="minVal">-</strong></div>
-            <div class="card-stat stat-max"><small>ช้าสุด (MAX)</small><strong id="maxVal">-</strong></div>
-            <div class="card-stat" style="background:#f1f3f4;"><small>จำนวนรายการ</small><strong id="totalCount">-</strong></div>
-        </div>
-        <div class="sla-bar">
-            <div class="sla-card" style="background:var(--success-bg); color:var(--success);"><small>< 1s</small><strong id="s1">-</strong></div>
-            <div class="sla-card" style="background:var(--info-bg); color:var(--info);"><small>1 - 1.5s</small><strong id="s2">-</strong></div>
-            <div class="sla-card" style="background:var(--normal-bg); color:var(--normal);"><small>1.5 - 2s</small><strong id="s3">-</strong></div>
-            <div class="sla-card" style="background:var(--warning-bg); color:var(--warning);"><small>2 - 3s</small><strong id="s4">-</strong></div>
-            <div class="sla-card" style="background:var(--danger-bg); color:var(--danger);"><small>> 3s</small><strong id="s5">-</strong></div>
-        </div>
+        <div id="statsBar" class="stats-bar"></div>
+        <div id="slaBar" class="sla-bar"></div>
         <div class="chart-bar"><canvas id="responseChart"></canvas></div>
-        <div id="tabContainer" class="tab-container"></div>
     </div>
 
     <div class="container">
@@ -96,8 +88,8 @@
             <thead>
                 <tr>
                     <th class="col-idx">#</th>
-                    <th class="col-req">Request Timestamp</th>
-                    <th class="col-res">Response Timestamp</th>
+                    <th class="col-req">Request (Start)</th>
+                    <th class="col-res">Response (Complete)</th>
                     <th class="col-dur">Duration (ms)</th>
                 </tr>
             </thead>
@@ -110,67 +102,25 @@
     let myChart = null;
     let allFilesData = []; 
     let activeIndex = 0;
+    let activeModule = 'getitem'; // 'getitem' or 'ticket'
 
     document.getElementById('fileInput').addEventListener('change', async function(e) {
         const files = Array.from(e.target.files);
         if (files.length === 0) return;
 
-        allFilesData = [];
-        const promises = files.map(file => {
-            return new Promise((resolve) => {
+        allFilesData = await Promise.all(files.map(file => {
+            return new Promise(resolve => {
                 const reader = new FileReader();
-                reader.onload = (event) => {
-                    const data = processLogText(event.target.result, file.name);
-                    resolve(data);
-                };
+                reader.onload = (event) => resolve(processLog(event.target.result, file.name));
                 reader.readAsText(file);
             });
-        });
+        }));
 
-        allFilesData = await Promise.all(promises);
+        document.getElementById('moduleNav').style.display = 'flex';
         renderTabs();
-        switchTab(0);
+        switchModule('getitem');
         document.getElementById('exportBtn').style.display = 'inline-block';
     });
-
-    function processLogText(text, fileName) {
-        const lines = text.split(/\r?\n/);
-        const pairs = [];
-        let currentReq = null;
-
-        lines.forEach(line => {
-            const lower = line.toLowerCase();
-            if (lower.includes("getitem request")) currentReq = cleanTimestamp(line);
-            else if (lower.includes("getitem response") && currentReq) {
-                const res = cleanTimestamp(line);
-                if (res) {
-                    const diff = res.dateObj - currentReq.dateObj;
-                    if (diff >= 0) pairs.push({ reqTime: currentReq.formatted, resTime: res.formatted, hour: currentReq.hour, duration: diff });
-                }
-                currentReq = null;
-            }
-        });
-
-        const durs = pairs.map(p => p.duration);
-        const total = pairs.length;
-        return {
-            fileName,
-            pairs,
-            stats: {
-                avg: total > 0 ? (durs.reduce((a, b) => a + b, 0) / total).toFixed(1) : 0,
-                min: total > 0 ? Math.min(...durs) : 0,
-                max: total > 0 ? Math.max(...durs) : 0,
-                total: total
-            },
-            sla: [
-                pairs.filter(p => p.duration < 1000).length,
-                pairs.filter(p => p.duration >= 1000 && p.duration < 1500).length,
-                pairs.filter(p => p.duration >= 1500 && p.duration < 2000).length,
-                pairs.filter(p => p.duration >= 2000 && p.duration < 3000).length,
-                pairs.filter(p => p.duration >= 3000).length
-            ]
-        };
-    }
 
     function cleanTimestamp(line) {
         const numbers = line.match(/\d+/g);
@@ -180,42 +130,128 @@
         } return null;
     }
 
-    function renderTabs() {
-        const container = document.getElementById('tabContainer');
-        container.innerHTML = allFilesData.map((file, i) => 
-            `<button class="tab-btn ${i === activeIndex ? 'active' : ''}" onclick="switchTab(${i})">${file.fileName}</button>`
-        ).join('');
+    function processLog(text, fileName) {
+        const lines = text.split(/\r?\n/);
+        const getitemPairs = [];
+        const ticketPairs = [];
+        let ticketErrorCount = 0;
+        let tempGetitem = null;
+        let tempTicket = null;
+
+        lines.forEach(line => {
+            const lower = line.toLowerCase();
+            
+            // 1. Getitem Logic
+            if (lower.includes("getitem request")) tempGetitem = cleanTimestamp(line);
+            else if (lower.includes("getitem response") && tempGetitem) {
+                const res = cleanTimestamp(line);
+                if (res) getitemPairs.push({ reqTime: tempGetitem.formatted, resTime: res.formatted, hour: tempGetitem.hour, duration: res.dateObj - tempGetitem.dateObj });
+                tempGetitem = null;
+            }
+
+            // 2. Ticket Print Logic
+            if (lower.includes("endtransaction request:")) tempTicket = cleanTimestamp(line);
+            else if (lower.includes("print receipt completed") && tempTicket) {
+                const res = cleanTimestamp(line);
+                if (res) ticketPairs.push({ reqTime: tempTicket.formatted, resTime: res.formatted, hour: tempTicket.hour, duration: res.dateObj - tempTicket.dateObj });
+                tempTicket = null;
+            }
+
+            // 3. EDC Error Logic
+            if (line.includes("EDC Response Error")) ticketErrorCount++;
+        });
+
+        return { fileName, getitem: calculateStats(getitemPairs), ticket: calculateStats(ticketPairs, ticketErrorCount) };
+    }
+
+    function calculateStats(pairs, errors = null) {
+        const durs = pairs.map(p => p.duration);
+        const total = pairs.length;
+        const avg = total > 0 ? (durs.reduce((a, b) => a + b, 0) / total) : 0;
+        return { 
+            pairs, 
+            errors,
+            avg: avg.toFixed(1), 
+            min: total > 0 ? Math.min(...durs) : 0, 
+            max: total > 0 ? Math.max(...durs) : 0, 
+            total 
+        };
+    }
+
+    function switchModule(module) {
+        activeModule = module;
+        document.querySelectorAll('.nav-item').forEach(el => el.classList.toggle('active', el.innerText.toLowerCase().includes(module)));
+        updateUI();
     }
 
     function switchTab(index) {
         activeIndex = index;
-        const data = allFilesData[index];
-        document.getElementById('mainContent').style.display = 'block';
-        
-        document.getElementById('avgVal').innerText = data.stats.avg + ' ms';
-        document.getElementById('minVal').innerText = data.stats.min.toLocaleString() + ' ms';
-        document.getElementById('maxVal').innerText = data.stats.max.toLocaleString() + ' ms';
-        document.getElementById('totalCount').innerText = data.stats.total.toLocaleString();
-
-        data.sla.forEach((count, i) => {
-            const pct = data.stats.total > 0 ? ((count / data.stats.total) * 100).toFixed(1) : 0;
-            document.getElementById(`s${i+1}`).innerText = `${pct}%`;
-        });
-
-        const tbody = document.getElementById('tableBody');
-        tbody.innerHTML = data.pairs.map((p, i) => {
-            let cls = p.duration >= 3000 ? 'slow-danger' : (p.duration >= 2000 ? 'slow-warn' : '');
-            return `<tr><td class="col-idx">${i+1}</td><td>${p.reqTime}</td><td>${p.resTime}</td><td class="col-dur ${cls}">${p.duration.toLocaleString()}</td></tr>`;
-        }).join('');
-
-        updateChart(data.pairs);
-        renderTabs();
-        setTimeout(recalcSticky, 100);
+        updateUI();
     }
 
-    function recalcSticky() {
-        const h = document.getElementById('stickyArea').offsetHeight;
-        document.querySelectorAll('thead th').forEach(th => th.style.top = (h + 60 - 1) + 'px');
+    function renderTabs() {
+        const container = document.getElementById('tabContainer');
+        container.style.display = 'flex';
+        container.innerHTML = allFilesData.map((f, i) => `<button class="tab-btn ${i===activeIndex?'active':''}" onclick="switchTab(${i})">${f.fileName}</button>`).join('');
+    }
+
+    function updateUI() {
+        const fileData = allFilesData[activeIndex];
+        const moduleData = fileData[activeModule];
+        document.getElementById('mainContent').style.display = 'block';
+
+        // Stats UI
+        let statsHTML = `
+            <div class="card-stat stat-avg"><small>AVG TIME</small><strong>${moduleData.avg} ms</strong></div>
+            <div class="card-stat stat-min"><small>MIN TIME</small><strong>${moduleData.min.toLocaleString()} ms</strong></div>
+            <div class="card-stat stat-max"><small>MAX TIME</small><strong>${moduleData.max.toLocaleString()} ms</strong></div>
+            <div class="card-stat"><small>TOTAL COUNT</small><strong>${moduleData.total.toLocaleString()}</strong></div>
+        `;
+        if (activeModule === 'ticket') {
+            statsHTML += `<div class="card-stat stat-max" style="background:var(--danger-bg);"><small>PRINT ERRORS</small><strong style="color:var(--danger)">${moduleData.errors}</strong></div>`;
+        }
+        document.getElementById('statsBar').innerHTML = statsHTML;
+
+        // SLA UI
+        let slaHTML = '';
+        if (activeModule === 'getitem') {
+            const labels = ['< 1s', '1-1.5s', '1.5-2s', '2-3s', '> 3s'];
+            const ranges = [[0,1000],[1000,1500],[1500,2000],[2000,3000],[3000,999999]];
+            const colors = ['var(--success)','var(--info)','var(--normal)','var(--warning)','var(--danger)'];
+            slaHTML = labels.map((l, i) => {
+                const count = moduleData.pairs.filter(p => p.duration >= ranges[i][0] && p.duration < ranges[i][1]).length;
+                const pct = moduleData.total > 0 ? ((count/moduleData.total)*100).toFixed(1) : 0;
+                return `<div class="sla-card"><small>${l}</small><strong style="color:${colors[i]}">${pct}%</strong></div>`;
+            }).join('');
+        } else {
+            const labels = ['< 5s', '5-6s', '7-8s', '> 8s'];
+            const ranges = [[0,5000],[5000,6000],[6000,8000],[8000,999999]];
+            const colors = ['var(--success)','var(--info)','var(--warning)','var(--danger)'];
+            slaHTML = labels.map((l, i) => {
+                const count = moduleData.pairs.filter(p => p.duration >= ranges[i][0] && p.duration < ranges[i][1]).length;
+                const pct = moduleData.total > 0 ? ((count/moduleData.total)*100).toFixed(1) : 0;
+                return `<div class="sla-card"><small style="font-size:1.1em; font-weight:800">${l}</small><strong style="color:${colors[i]}">${pct}%</strong></div>`;
+            }).join('');
+        }
+        document.getElementById('slaBar').innerHTML = slaHTML;
+
+        // Table UI
+        const avgVal = parseFloat(moduleData.avg);
+        document.getElementById('tableBody').innerHTML = moduleData.pairs.map((p, i) => `
+            <tr>
+                <td class="col-idx">${i+1}</td>
+                <td>${p.reqTime}</td>
+                <td>${p.resTime}</td>
+                <td class="col-dur ${p.duration > (activeModule==='getitem'?3000:8000)?'slow-danger':''}">${p.duration.toLocaleString()}</td>
+            </tr>
+        `).join('');
+
+        updateChart(moduleData.pairs);
+        renderTabs();
+        setTimeout(() => {
+            const h = document.getElementById('stickyArea').offsetHeight;
+            document.querySelectorAll('thead th').forEach(th => th.style.top = (h + 144 - 1) + 'px');
+        }, 100);
     }
 
     function updateChart(pairs) {
@@ -232,72 +268,61 @@
         });
     }
 
-    async function exportAllToExcel() {
+    async function exportEverything() {
         const workbook = new ExcelJS.Workbook();
         const canvas = document.getElementById('responseChart');
         const ratio = canvas.height / canvas.width;
 
-        for (const fileData of allFilesData) {
-            const sheetName = fileData.fileName.replace(/[\[\]\*\?\/\:\\]/g, '').substring(0, 31);
-            const sheet = workbook.addWorksheet(sheetName);
-
-            // Title
+        for (const f of allFilesData) {
+            const sheet = workbook.addWorksheet(f.fileName.substring(0,31));
+            
+            // Layout Excel: Section 1 (Getitem) & Section 2 (Ticket)
             sheet.mergeCells('A1:E2');
             const title = sheet.getCell('A1');
-            title.value = `REPORT: ${fileData.fileName}`;
-            title.font = { size: 14, bold: true, color: { argb: 'FFFFFFFF' } };
-            title.alignment = { vertical: 'middle', horizontal: 'center' };
-            title.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF1A73E8' } };
+            title.value = `PERFORMANCE REPORT: ${f.fileName}`;
+            title.font = { bold: true, size: 14, color: { argb: 'FFFFFFFF'} };
+            title.fill = { type: 'pattern', pattern:'solid', fgColor:{ argb: 'FF1A73E8'}};
+            title.alignment = { horizontal: 'center', vertical: 'middle' };
 
-            // Stats
-            const kpis = [['AVG', fileData.stats.avg], ['MIN', fileData.stats.min], ['MAX', fileData.stats.max], ['TOTAL', fileData.stats.total]];
-            kpis.forEach((k, i) => {
-                sheet.getCell(`A${4+i}`).value = k[0];
-                sheet.getCell(`B${4+i}`).value = k[1];
-                sheet.getCell(`A${4+i}`).font = { bold: true };
+            // --- GETITEM SECTION ---
+            sheet.getCell('A4').value = 'GETITEM ANALYSIS'; sheet.getCell('A4').font = {bold:true, size:12};
+            const gStats = [['AVG', f.getitem.avg], ['MIN', f.getitem.min], ['MAX', f.getitem.max], ['TOTAL', f.getitem.total]];
+            gStats.forEach((s, i) => { sheet.getCell(`A${5+i}`).value = s[0]; sheet.getCell(`B${5+i}`).value = s[1]; });
+
+            // --- TICKET SECTION ---
+            sheet.getCell('D4').value = 'TICKET PRINT ANALYSIS'; sheet.getCell('D4').font = {bold:true, size:12};
+            const tStats = [['AVG', f.ticket.avg], ['MIN', f.ticket.min], ['MAX', f.ticket.max], ['TOTAL', f.ticket.total], ['ERRORS', f.ticket.errors]];
+            tStats.forEach((s, i) => { sheet.getCell(`D${5+i}`).value = s[0]; sheet.getCell(`E${5+i}`).value = s[1]; });
+
+            // Chart
+            updateChart(f.getitem.pairs);
+            const imgG = workbook.addImage({ base64: canvas.toDataURL(), extension: 'png' });
+            sheet.addImage(imgG, { tl: { col: 0, row: 11 }, ext: { width: 400, height: 400*ratio } });
+
+            updateChart(f.ticket.pairs);
+            const imgT = workbook.addImage({ base64: canvas.toDataURL(), extension: 'png' });
+            sheet.addImage(imgT, { tl: { col: 3, row: 11 }, ext: { width: 400, height: 400*ratio } });
+
+            // Raw Data
+            const rowStart = 25;
+            const hRow = sheet.getRow(rowStart);
+            hRow.values = ['No.', 'Module', 'Request Timestamp', 'Response Timestamp', 'Duration (ms)'];
+            hRow.eachCell(c => { c.font={bold:true, color:{argb:'FFFFFFFF'}}; c.fill={type:'pattern', pattern:'solid', fgColor:{argb:'FF1A73E8'}}; });
+
+            f.getitem.pairs.forEach((p, i) => {
+                sheet.addRow([i+1, 'Getitem', p.reqTime, p.resTime, p.duration]);
+            });
+            f.ticket.pairs.forEach((p, i) => {
+                sheet.addRow([i+1, 'Ticket', p.reqTime, p.resTime, p.duration]);
             });
 
-            // SLA
-            sheet.getCell('D4').value = 'SLA BREAKDOWN'; sheet.getCell('D4').font = { bold: true };
-            const slaLabels = ['< 1,000 ms', '1,000 - 1,500 ms', '1,500 - 2,000 ms', '2,000 - 3,000 ms', '> 3,000 ms'];
-            const slaColors = ['FFD4EDDA', 'FFD1F5FF', 'FFE8E2F7', 'FFFFF3E0', 'FFFCE8E6'];
-            fileData.sla.forEach((count, i) => {
-                const pct = ((count / fileData.stats.total) * 100).toFixed(1) + '%';
-                sheet.getCell(`D${5+i}`).value = slaLabels[i];
-                sheet.getCell(`E${5+i}`).value = `${pct} (${count})`;
-                sheet.getCell(`E${5+i}`).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: slaColors[i] } };
-            });
-
-            // Chart with Correct Ratio
-            updateChart(fileData.pairs);
-            const chartImg = document.getElementById('responseChart').toDataURL('image/png');
-            const excelWidth = 600;
-            const excelHeight = excelWidth * ratio;
-            sheet.addImage(workbook.addImage({ base64: chartImg, extension: 'png' }), { 
-                tl: { col: 0, row: 10 }, 
-                ext: { width: excelWidth, height: excelHeight } 
-            });
-
-            // Table
-            const startRow = 25;
-            const hRow = sheet.getRow(startRow);
-            hRow.values = ['No.', 'Request Timestamp', 'Response Timestamp', 'Duration (ms)'];
-            hRow.eachCell(c => { c.font = { bold: true, color: { argb: 'FFFFFFFF' } }; c.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF1A73E8' } }; });
-
-            fileData.pairs.forEach((p, i) => {
-                const row = sheet.addRow([i + 1, p.reqTime, p.resTime, p.duration]);
-                if (p.duration >= 3000) row.getCell(4).font = { color: { argb: 'FFFF0000' }, bold: true };
-            });
-
-            sheet.getColumn(2).width = 28; sheet.getColumn(3).width = 28;
+            sheet.getColumn(3).width = 25; sheet.getColumn(4).width = 25;
         }
 
-        switchTab(activeIndex);
         const buffer = await workbook.xlsx.writeBuffer();
-        saveAs(new Blob([buffer]), `Final_Log_Analysis.xlsx`);
+        saveAs(new Blob([buffer]), `Full_Performance_Analysis.xlsx`);
+        switchModule(activeModule);
     }
-
-    window.addEventListener('resize', recalcSticky);
 </script>
 </body>
 </html>
