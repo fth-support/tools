@@ -2,7 +2,7 @@
 <html lang="th">
 <head>
     <meta charset="UTF-8">
-    <title>Log Analyzer V6.0 - Ultimate Professional Report</title>
+    <title>Log Analyzer V7.0 - Fixed Ratio & Large Labels</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.3.0/exceljs.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
@@ -17,23 +17,29 @@
         }
         body { font-family: 'Segoe UI', Tahoma, sans-serif; background-color: var(--bg-color); margin: 0; padding: 0; }
         .header-upload { background: white; padding: 15px; text-align: center; border-bottom: 1px solid #ddd; position: sticky; top: 0; z-index: 1100; }
-        .export-btn { background: #1d6f42; color: white; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer; font-weight: bold; margin-left: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
+        .export-btn { background: #1d6f42; color: white; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer; font-weight: bold; margin-left: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.2); transition: 0.2s; }
+        .export-btn:hover { background: #145a32; transform: translateY(-1px); }
 
         .sticky-top-area { position: sticky; top: 65px; z-index: 1000; background: white; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
         .stats-bar, .sla-bar { display: flex; gap: 8px; padding: 10px; border-bottom: 1px solid #eee; }
         
         .card-stat { flex: 1; padding: 12px 5px; border-radius: 8px; text-align: center; border: 1px solid #dadce0; }
-        .card-stat small { display: block; font-size: 0.75em; font-weight: 700; margin-bottom: 4px; text-transform: uppercase; color: #5f6368; }
-        
-        /* ขยายตัวเลข SLA ให้ใหญ่ขึ้นตามคำขอ */
+        .card-stat small { display: block; font-size: 0.85em; font-weight: 700; margin-bottom: 4px; text-transform: uppercase; color: #5f6368; }
         .card-stat strong { font-size: 1.8em; line-height: 1.2; display: block; }
         
         .stat-avg { background: var(--info-bg); color: #01579b; }
         .stat-min { background: var(--success-bg); color: #1b5e20; }
         .stat-max { background: var(--danger-bg); color: #b71c1c; }
 
+        /* ปรับขนาดตัวอักษรป้ายกำกับ SLA ให้ใหญ่ขึ้นตามคำขอ */
         .sla-card { flex: 1; padding: 10px 2px; border-radius: 6px; text-align: center; border: 1px solid #eee; }
-        .sla-card strong { font-size: 1.4em; } /* ตัวเลขสัดส่วน % ใหญ่ขึ้น */
+        .sla-card small { 
+            display: block; 
+            font-size: 1.1em; /* ขยายขนาดป้ายกำกับ (1s, 2s...) */
+            font-weight: 800; 
+            margin-bottom: 5px;
+        }
+        .sla-card strong { font-size: 1.4em; } /* ขนาด % คงเดิม */
 
         .chart-bar { padding: 10px 20px; height: 180px; }
         table { width: 100%; border-collapse: collapse; table-layout: fixed; background: white; }
@@ -49,9 +55,9 @@
 <body>
 
 <div class="header-upload">
-    <strong>Log Analyzer V6.0</strong> | 
+    <strong>Log Analyzer V7.0</strong> | 
     <input type="file" id="fileInput" accept=".log,.txt">
-    <button id="exportBtn" class="export-btn" style="display:none;" onclick="exportToExcelV6()">✨ Export Full Excel Report</button>
+    <button id="exportBtn" class="export-btn" style="display:none;" onclick="exportToExcelV7()">✨ Export Report (Fixed Ratio)</button>
 </div>
 
 <div id="mainContent" style="display:none;">
@@ -167,19 +173,19 @@
         });
     }
 
-    async function exportToExcelV6() {
+    async function exportToExcelV7() {
         const workbook = new ExcelJS.Workbook();
         const sheet = workbook.addWorksheet('Log Analysis');
 
-        // Header Title
+        // Header
         sheet.mergeCells('A1:E2');
         const title = sheet.getCell('A1');
-        title.value = 'GETITEM PERFORMANCE DASHBOARD REPORT';
+        title.value = 'GETITEM PERFORMANCE ANALYSIS REPORT';
         title.font = { size: 16, bold: true, color: { argb: 'FFFFFFFF' } };
         title.alignment = { vertical: 'middle', horizontal: 'center' };
         title.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF1A73E8' } };
 
-        // KPI Section (Colored Cells)
+        // KPIs
         const stats = [
             ['AVERAGE RESPONSE', document.getElementById('avgVal').innerText, 'FFD1F5FF'],
             ['MINIMUM TIME', document.getElementById('minVal').innerText, 'FFD4EDDA'],
@@ -187,58 +193,50 @@
             ['TOTAL SAMPLES', currentData.length, 'FFF1F3F4']
         ];
         stats.forEach((s, i) => {
-            const row = 4 + i;
-            sheet.getCell(`A${row}`).value = s[0];
-            sheet.getCell(`B${row}`).value = s[1];
-            sheet.getCell(`A${row}`).font = { bold: true };
-            sheet.getCell(`B${row}`).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: s[2] } };
-            sheet.getCell(`B${row}`).alignment = { horizontal: 'center' };
+            sheet.getCell(`A${4+i}`).value = s[0];
+            sheet.getCell(`B${4+i}`).value = s[1];
+            sheet.getCell(`A${4+i}`).font = { bold: true };
+            sheet.getCell(`B${4+i}`).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: s[2] } };
         });
 
-        // SLA Section (New Table in Excel)
+        // SLA
         sheet.getCell('D4').value = 'SLA BREAKDOWN (%)';
         sheet.getCell('D4').font = { bold: true };
-        const slaMap = [
-            ['< 1,000 ms', 's1', 'FFD4EDDA'], ['1,000 - 1,500 ms', 's2', 'FFD1F5FF'],
-            ['1,500 - 2,000 ms', 's3', 'FFE8E2F7'], ['2,000 - 3,000 ms', 's4', 'FFFFF3E0'],
-            ['> 3,000 ms', 's5', 'FFFCE8E6']
-        ];
+        const slaMap = [['< 1,000 ms', 's1', 'FFD4EDDA'], ['1,000 - 1,500 ms', 's2', 'FFD1F5FF'], ['1,500 - 2,000 ms', 's3', 'FFE8E2F7'], ['2,000 - 3,000 ms', 's4', 'FFFFF3E0'], ['> 3,000 ms', 's5', 'FFFCE8E6']];
         slaMap.forEach((sla, i) => {
-            const row = 5 + i;
-            sheet.getCell(`D${row}`).value = sla[0];
-            sheet.getCell(`E${row}`).value = document.getElementById(sla[1]).innerText;
-            sheet.getCell(`E${row}`).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: sla[2] } };
+            sheet.getCell(`D${5+i}`).value = sla[0];
+            sheet.getCell(`E${5+i}`).value = document.getElementById(sla[1]).innerText;
+            sheet.getCell(`E${5+i}`).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: sla[2] } };
         });
 
-        // Add Chart Image
-        const chartImg = document.getElementById('responseChart').toDataURL('image/png');
-        sheet.addImage(workbook.addImage({ base64: chartImg, extension: 'png' }), { tl: { col: 0, row: 11 }, ext: { width: 650, height: 220 } });
+        // FIXED RATIO CHART INSERTION
+        const canvas = document.getElementById('responseChart');
+        const chartImg = canvas.toDataURL('image/png');
+        
+        // คำนวณ Aspect Ratio จาก Canvas จริง
+        const canvasRatio = canvas.height / canvas.width;
+        const excelWidth = 650; // กำหนดความกว้างใน Excel เป็นหลัก
+        const excelHeight = excelWidth * canvasRatio; // คำนวณความสูงตาม Ratio
 
-        // Raw Data Header
-        const startRow = 25;
+        sheet.addImage(workbook.addImage({ base64: chartImg, extension: 'png' }), { 
+            tl: { col: 0, row: 11 }, 
+            ext: { width: excelWidth, height: excelHeight } 
+        });
+
+        // Table Header
+        const startRow = 26;
         const headerRow = sheet.getRow(startRow);
         headerRow.values = ['No.', 'Request Timestamp', 'Response Timestamp', 'Duration (ms)'];
-        headerRow.eachCell(c => {
-            c.font = { bold: true, color: { argb: 'FFFFFFFF' } };
-            c.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF1A73E8' } };
-            c.alignment = { horizontal: 'center' };
-        });
+        headerRow.eachCell(c => { c.font = { bold: true, color: { argb: 'FFFFFFFF' } }; c.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF1A73E8' } }; });
 
         currentData.forEach((d, i) => {
             const row = sheet.addRow([i + 1, d.reqTime, d.resTime, d.duration]);
-            row.getCell(4).alignment = { horizontal: 'right' };
             if (d.duration >= 3000) row.getCell(4).font = { color: { argb: 'FFFF0000' }, bold: true };
         });
 
-        // FIX: Auto-width & No Clipping
-        sheet.getColumn(1).width = 8;
-        sheet.getColumn(2).width = 30; // กว้างพอสำหรับ Timestamp
-        sheet.getColumn(3).width = 30; 
-        sheet.getColumn(4).width = 20; 
-        sheet.getColumn(5).width = 20;
-
+        sheet.getColumn(2).width = 30; sheet.getColumn(3).width = 30;
         const buffer = await workbook.xlsx.writeBuffer();
-        saveAs(new Blob([buffer]), `Log_Performance_Report_V6.xlsx`);
+        saveAs(new Blob([buffer]), `Performance_Report_V7.xlsx`);
     }
     window.addEventListener('resize', recalcSticky);
 </script>
