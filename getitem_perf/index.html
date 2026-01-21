@@ -2,7 +2,7 @@
 <html lang="th">
 <head>
     <meta charset="UTF-8">
-    <title>Log Analyzer V7.0 - Fixed Ratio & Large Labels</title>
+    <title>Log Analyzer V8.0 - Multi-File Dashboard</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.3.0/exceljs.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
@@ -16,11 +16,23 @@
             --danger: #d93025; --danger-bg: #fce8e6;
         }
         body { font-family: 'Segoe UI', Tahoma, sans-serif; background-color: var(--bg-color); margin: 0; padding: 0; }
+        
+        /* Header & Tabs */
         .header-upload { background: white; padding: 15px; text-align: center; border-bottom: 1px solid #ddd; position: sticky; top: 0; z-index: 1100; }
-        .export-btn { background: #1d6f42; color: white; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer; font-weight: bold; margin-left: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.2); transition: 0.2s; }
-        .export-btn:hover { background: #145a32; transform: translateY(-1px); }
+        .tab-container { 
+            display: flex; overflow-x: auto; background: #eee; padding: 5px 10px 0 10px; gap: 4px;
+            position: sticky; top: 60px; z-index: 1050; border-bottom: 1px solid #ccc;
+        }
+        .tab-btn {
+            padding: 8px 15px; border: 1px solid #ccc; border-bottom: none; background: #e0e0e0;
+            border-radius: 8px 8px 0 0; cursor: pointer; font-size: 0.85em; white-space: nowrap; transition: 0.2s;
+        }
+        .tab-btn.active { background: white; font-weight: bold; border-top: 3px solid var(--primary-color); }
+        .tab-btn:hover { background: #f5f5f5; }
 
-        .sticky-top-area { position: sticky; top: 65px; z-index: 1000; background: white; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+        .export-btn { background: #1d6f42; color: white; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer; font-weight: bold; margin-left: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
+
+        .sticky-top-area { position: sticky; top: 100px; z-index: 1000; background: white; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
         .stats-bar, .sla-bar { display: flex; gap: 8px; padding: 10px; border-bottom: 1px solid #eee; }
         
         .card-stat { flex: 1; padding: 12px 5px; border-radius: 8px; text-align: center; border: 1px solid #dadce0; }
@@ -31,15 +43,9 @@
         .stat-min { background: var(--success-bg); color: #1b5e20; }
         .stat-max { background: var(--danger-bg); color: #b71c1c; }
 
-        /* ปรับขนาดตัวอักษรป้ายกำกับ SLA ให้ใหญ่ขึ้นตามคำขอ */
         .sla-card { flex: 1; padding: 10px 2px; border-radius: 6px; text-align: center; border: 1px solid #eee; }
-        .sla-card small { 
-            display: block; 
-            font-size: 1.1em; /* ขยายขนาดป้ายกำกับ (1s, 2s...) */
-            font-weight: 800; 
-            margin-bottom: 5px;
-        }
-        .sla-card strong { font-size: 1.4em; } /* ขนาด % คงเดิม */
+        .sla-card small { display: block; font-size: 1.1em; font-weight: 800; margin-bottom: 5px; }
+        .sla-card strong { font-size: 1.4em; }
 
         .chart-bar { padding: 10px 20px; height: 180px; }
         table { width: 100%; border-collapse: collapse; table-layout: fixed; background: white; }
@@ -55,10 +61,12 @@
 <body>
 
 <div class="header-upload">
-    <strong>Log Analyzer V7.0</strong> | 
-    <input type="file" id="fileInput" accept=".log,.txt">
-    <button id="exportBtn" class="export-btn" style="display:none;" onclick="exportToExcelV7()">✨ Export Report (Fixed Ratio)</button>
+    <strong>Log Analyzer V8.0</strong> | 
+    <input type="file" id="fileInput" accept=".log,.txt" multiple>
+    <button id="exportBtn" class="export-btn" style="display:none;" onclick="exportAllToExcel()">✨ Export All Sheets to Excel</button>
 </div>
+
+<div id="tabContainer" class="tab-container" style="display:none;"></div>
 
 <div id="mainContent" style="display:none;">
     <div class="sticky-top-area" id="stickyArea">
@@ -94,15 +102,72 @@
 </div>
 
 <script>
-    let myChart = null; let currentData = [];
+    let myChart = null;
+    let allFilesData = []; // เก็บข้อมูลทุกไฟล์ [{ fileName, pairs, stats, sla }]
+    let activeIndex = 0;
 
-    document.getElementById('fileInput').addEventListener('change', function(e) {
-        const file = e.target.files[0];
-        if (!file) return;
-        const reader = new FileReader();
-        reader.onload = (event) => processLog(event.target.result);
-        reader.readAsText(file);
+    document.getElementById('fileInput').addEventListener('change', async function(e) {
+        const files = Array.from(e.target.files);
+        if (files.length === 0) return;
+
+        allFilesData = [];
+        const promises = files.map(file => {
+            return new Promise((resolve) => {
+                const reader = new FileReader();
+                reader.onload = (event) => {
+                    const data = processLogText(event.target.result, file.name);
+                    resolve(data);
+                };
+                reader.readAsText(file);
+            });
+        });
+
+        allFilesData = await Promise.all(promises);
+        renderTabs();
+        switchTab(0);
+        document.getElementById('exportBtn').style.display = 'inline-block';
     });
+
+    function processLogText(text, fileName) {
+        const lines = text.split(/\r?\n/);
+        const pairs = [];
+        let currentReq = null;
+
+        lines.forEach(line => {
+            const lower = line.toLowerCase();
+            if (lower.includes("getitem request")) currentReq = cleanTimestamp(line);
+            else if (lower.includes("getitem response") && currentReq) {
+                const res = cleanTimestamp(line);
+                if (res) {
+                    const diff = res.dateObj - currentReq.dateObj;
+                    if (diff >= 0) pairs.push({ reqTime: currentReq.formatted, resTime: res.formatted, hour: currentReq.hour, duration: diff });
+                }
+                currentReq = null;
+            }
+        });
+
+        const durs = pairs.map(p => p.duration);
+        const total = pairs.length;
+        const avg = total > 0 ? durs.reduce((a, b) => a + b, 0) / total : 0;
+
+        return {
+            fileName,
+            pairs,
+            stats: {
+                avg: avg.toFixed(1),
+                min: total > 0 ? Math.min(...durs) : 0,
+                max: total > 0 ? Math.max(...durs) : 0,
+                total: total
+            },
+            sla: [
+                pairs.filter(p => p.duration < 1000).length,
+                pairs.filter(p => p.duration >= 1000 && p.duration < 1500).length,
+                pairs.filter(p => p.duration >= 1500 && p.duration < 2000).length,
+                pairs.filter(p => p.duration >= 2000 && p.duration < 3000).length,
+                pairs.filter(p => p.duration >= 3000).length
+            ]
+        };
+    }
 
     function cleanTimestamp(line) {
         const numbers = line.match(/\d+/g);
@@ -112,56 +177,51 @@
         } return null;
     }
 
-    function processLog(text) {
-        const lines = text.split(/\r?\n/); const pairs = []; let currentReq = null;
-        lines.forEach(line => {
-            const lower = line.toLowerCase();
-            if (lower.includes("getitem request")) currentReq = cleanTimestamp(line);
-            else if (lower.includes("getitem response") && currentReq) {
-                const res = cleanTimestamp(line);
-                if (res) {
-                    const diff = res.dateObj - currentReq.dateObj;
-                    if (diff >= 0) pairs.push({ reqTime: currentReq.formatted, resTime: res.formatted, hour: currentReq.hour, duration: diff });
-                } currentReq = null;
-            }
-        });
-        if (pairs.length > 0) { currentData = pairs; renderUI(pairs); document.getElementById('exportBtn').style.display = 'inline-block'; }
-        else alert("ไม่พบข้อมูล");
+    function renderTabs() {
+        const container = document.getElementById('tabContainer');
+        container.innerHTML = allFilesData.map((file, i) => 
+            `<button class="tab-btn ${i === activeIndex ? 'active' : ''}" onclick="switchTab(${i})">${file.fileName}</button>`
+        ).join('');
+        container.style.display = 'flex';
     }
 
-    function renderUI(data) {
+    function switchTab(index) {
+        activeIndex = index;
+        const data = allFilesData[index];
         document.getElementById('mainContent').style.display = 'block';
-        const durs = data.map(d => d.duration); const total = data.length; const avg = durs.reduce((a, b) => a + b, 0) / total;
-        document.getElementById('avgVal').innerText = avg.toFixed(1) + ' ms';
-        document.getElementById('minVal').innerText = Math.min(...durs).toLocaleString() + ' ms';
-        document.getElementById('maxVal').innerText = Math.max(...durs).toLocaleString() + ' ms';
-        document.getElementById('totalCount').innerText = total.toLocaleString();
+        
+        // Update Stats UI
+        document.getElementById('avgVal').innerText = data.stats.avg + ' ms';
+        document.getElementById('minVal').innerText = data.stats.min.toLocaleString() + ' ms';
+        document.getElementById('maxVal').innerText = data.stats.max.toLocaleString() + ' ms';
+        document.getElementById('totalCount').innerText = data.stats.total.toLocaleString();
 
-        const groups = [
-            data.filter(d => d.duration < 1000).length,
-            data.filter(d => d.duration >= 1000 && d.duration < 1500).length,
-            data.filter(d => d.duration >= 1500 && d.duration < 2000).length,
-            data.filter(d => d.duration >= 2000 && d.duration < 3000).length,
-            data.filter(d => d.duration >= 3000).length
-        ];
-        groups.forEach((count, i) => { document.getElementById(`s${i+1}`).innerText = `${((count/total)*100).toFixed(1)}%`; });
+        // Update SLA UI
+        data.sla.forEach((count, i) => {
+            const pct = data.stats.total > 0 ? ((count / data.stats.total) * 100).toFixed(1) : 0;
+            document.getElementById(`s${i+1}`).innerText = `${pct}%`;
+        });
 
+        // Update Table
         const tbody = document.getElementById('tableBody');
-        tbody.innerHTML = data.map((d, i) => {
-            let cls = d.duration >= 3000 ? 'slow-danger' : (d.duration >= 2000 ? 'slow-warn' : '');
-            return `<tr><td class="col-idx">${i+1}</td><td class="col-req">${d.reqTime}</td><td class="col-res">${d.resTime}</td><td class="col-dur ${cls}">${d.duration.toLocaleString()}</td></tr>`;
+        tbody.innerHTML = data.pairs.map((p, i) => {
+            let cls = p.duration >= 3000 ? 'slow-danger' : (p.duration >= 2000 ? 'slow-warn' : '');
+            return `<tr><td class="col-idx">${i+1}</td><td>${p.reqTime}</td><td>${p.resTime}</td><td class="col-dur ${cls}">${p.duration.toLocaleString()}</td></tr>`;
         }).join('');
-        updateChart(data); setTimeout(recalcSticky, 100);
+
+        updateChart(data.pairs);
+        renderTabs(); // Refresh active state
+        setTimeout(recalcSticky, 100);
     }
 
     function recalcSticky() {
         const h = document.getElementById('stickyArea').offsetHeight;
-        document.querySelectorAll('thead th').forEach(th => th.style.top = (h + 65 - 1) + 'px');
+        document.querySelectorAll('thead th').forEach(th => th.style.top = (h + 100 - 1) + 'px');
     }
 
-    function updateChart(data) {
+    function updateChart(pairs) {
         const hourly = {};
-        data.forEach(d => { if (!hourly[d.hour]) hourly[d.hour] = { sum: 0, count: 0 }; hourly[d.hour].sum += d.duration; hourly[d.hour].count++; });
+        pairs.forEach(p => { if (!hourly[p.hour]) hourly[p.hour] = { sum: 0, count: 0 }; hourly[p.hour].sum += p.duration; hourly[p.hour].count++; });
         const labels = Object.keys(hourly).sort().map(h => h + ":00");
         const vals = Object.keys(hourly).sort().map(h => (hourly[h].sum / hourly[h].count).toFixed(1));
         const ctx = document.getElementById('responseChart').getContext('2d');
@@ -169,75 +229,77 @@
         myChart = new Chart(ctx, {
             type: 'line',
             data: { labels: labels, datasets: [{ label: 'Avg Latency (ms)', data: vals, borderColor: '#1a73e8', backgroundColor: 'rgba(26, 115, 232, 0.1)', fill: true, tension: 0.3 }] },
-            options: { responsive: true, maintainAspectRatio: false }
+            options: { responsive: true, maintainAspectRatio: false, animation: false }
         });
     }
 
-    async function exportToExcelV7() {
+    async function exportAllToExcel() {
         const workbook = new ExcelJS.Workbook();
-        const sheet = workbook.addWorksheet('Log Analysis');
-
-        // Header
-        sheet.mergeCells('A1:E2');
-        const title = sheet.getCell('A1');
-        title.value = 'GETITEM PERFORMANCE ANALYSIS REPORT';
-        title.font = { size: 16, bold: true, color: { argb: 'FFFFFFFF' } };
-        title.alignment = { vertical: 'middle', horizontal: 'center' };
-        title.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF1A73E8' } };
-
-        // KPIs
-        const stats = [
-            ['AVERAGE RESPONSE', document.getElementById('avgVal').innerText, 'FFD1F5FF'],
-            ['MINIMUM TIME', document.getElementById('minVal').innerText, 'FFD4EDDA'],
-            ['MAXIMUM TIME', document.getElementById('maxVal').innerText, 'FFFCE8E6'],
-            ['TOTAL SAMPLES', currentData.length, 'FFF1F3F4']
-        ];
-        stats.forEach((s, i) => {
-            sheet.getCell(`A${4+i}`).value = s[0];
-            sheet.getCell(`B${4+i}`).value = s[1];
-            sheet.getCell(`A${4+i}`).font = { bold: true };
-            sheet.getCell(`B${4+i}`).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: s[2] } };
-        });
-
-        // SLA
-        sheet.getCell('D4').value = 'SLA BREAKDOWN (%)';
-        sheet.getCell('D4').font = { bold: true };
-        const slaMap = [['< 1,000 ms', 's1', 'FFD4EDDA'], ['1,000 - 1,500 ms', 's2', 'FFD1F5FF'], ['1,500 - 2,000 ms', 's3', 'FFE8E2F7'], ['2,000 - 3,000 ms', 's4', 'FFFFF3E0'], ['> 3,000 ms', 's5', 'FFFCE8E6']];
-        slaMap.forEach((sla, i) => {
-            sheet.getCell(`D${5+i}`).value = sla[0];
-            sheet.getCell(`E${5+i}`).value = document.getElementById(sla[1]).innerText;
-            sheet.getCell(`E${5+i}`).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: sla[2] } };
-        });
-
-        // FIXED RATIO CHART INSERTION
-        const canvas = document.getElementById('responseChart');
-        const chartImg = canvas.toDataURL('image/png');
         
-        // คำนวณ Aspect Ratio จาก Canvas จริง
-        const canvasRatio = canvas.height / canvas.width;
-        const excelWidth = 650; // กำหนดความกว้างใน Excel เป็นหลัก
-        const excelHeight = excelWidth * canvasRatio; // คำนวณความสูงตาม Ratio
+        for (const fileData of allFilesData) {
+            // สร้าง Sheet ใหม่โดยใช้ชื่อไฟล์ (ตัดอักขระพิเศษและห้ามยาวเกิน 31 ตัว)
+            const sheetName = fileData.fileName.replace(/[\[\]\*\?\/\:\\]/g, '').substring(0, 31);
+            const sheet = workbook.addWorksheet(sheetName);
 
-        sheet.addImage(workbook.addImage({ base64: chartImg, extension: 'png' }), { 
-            tl: { col: 0, row: 11 }, 
-            ext: { width: excelWidth, height: excelHeight } 
-        });
+            // Title
+            sheet.mergeCells('A1:E2');
+            const title = sheet.getCell('A1');
+            title.value = `ANALYSIS: ${fileData.fileName}`;
+            title.font = { size: 14, bold: true, color: { argb: 'FFFFFFFF' } };
+            title.alignment = { vertical: 'middle', horizontal: 'center' };
+            title.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF1A73E8' } };
 
-        // Table Header
-        const startRow = 26;
-        const headerRow = sheet.getRow(startRow);
-        headerRow.values = ['No.', 'Request Timestamp', 'Response Timestamp', 'Duration (ms)'];
-        headerRow.eachCell(c => { c.font = { bold: true, color: { argb: 'FFFFFFFF' } }; c.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF1A73E8' } }; });
+            // Stats
+            sheet.getCell('A4').value = 'OVERALL SUMMARY'; sheet.getCell('A4').font = { bold: true };
+            const kpis = [['AVG', fileData.stats.avg], ['MIN', fileData.stats.min], ['MAX', fileData.stats.max], ['TOTAL', fileData.stats.total]];
+            kpis.forEach((k, i) => {
+                sheet.getCell(`A${5+i}`).value = k[0];
+                sheet.getCell(`B${5+i}`).value = k[1];
+                sheet.getCell(`B${5+i}`).alignment = { horizontal: 'right' };
+            });
 
-        currentData.forEach((d, i) => {
-            const row = sheet.addRow([i + 1, d.reqTime, d.resTime, d.duration]);
-            if (d.duration >= 3000) row.getCell(4).font = { color: { argb: 'FFFF0000' }, bold: true };
-        });
+            // SLA Breakdown in Excel
+            sheet.getCell('D4').value = 'SLA BREAKDOWN'; sheet.getCell('D4').font = { bold: true };
+            const slaLabels = ['< 1,000 ms', '1,000 - 1,500 ms', '1,500 - 2,000 ms', '2,000 - 3,000 ms', '> 3,000 ms'];
+            const slaColors = ['FFD4EDDA', 'FFD1F5FF', 'FFE8E2F7', 'FFFFF3E0', 'FFFCE8E6'];
+            fileData.sla.forEach((count, i) => {
+                const pct = ((count / fileData.stats.total) * 100).toFixed(1) + '%';
+                sheet.getCell(`D${5+i}`).value = slaLabels[i];
+                sheet.getCell(`E${5+i}`).value = `${pct} (${count})`;
+                sheet.getCell(`E${5+i}`).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: slaColors[i] } };
+            });
 
-        sheet.getColumn(2).width = 30; sheet.getColumn(3).width = 30;
+            // Re-render chart to get image for THIS specific file
+            updateChart(fileData.pairs);
+            const chartImg = document.getElementById('responseChart').toDataURL('image/png');
+            const canvas = document.getElementById('responseChart');
+            const ratio = canvas.height / canvas.width;
+            sheet.addImage(workbook.addImage({ base64: chartImg, extension: 'png' }), { 
+                tl: { col: 0, row: 10 }, 
+                ext: { width: 600, height: 600 * ratio } 
+            });
+
+            // Raw Data Table
+            const startRow = 25;
+            const hRow = sheet.getRow(startRow);
+            hRow.values = ['No.', 'Request Timestamp', 'Response Timestamp', 'Duration (ms)'];
+            hRow.eachCell(c => { c.font = { bold: true, color: { argb: 'FFFFFFFF' } }; c.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF1A73E8' } }; });
+
+            fileData.pairs.forEach((p, i) => {
+                const row = sheet.addRow([i + 1, p.reqTime, p.resTime, p.duration]);
+                if (p.duration >= 3000) row.getCell(4).font = { color: { argb: 'FFFF0000' }, bold: true };
+            });
+
+            sheet.getColumn(2).width = 28; sheet.getColumn(3).width = 28;
+        }
+
+        // Return to active tab's chart
+        switchTab(activeIndex);
+
         const buffer = await workbook.xlsx.writeBuffer();
-        saveAs(new Blob([buffer]), `Performance_Report_V7.xlsx`);
+        saveAs(new Blob([buffer]), `MultiFile_Log_Report_${new Date().getTime()}.xlsx`);
     }
+
     window.addEventListener('resize', recalcSticky);
 </script>
 </body>
