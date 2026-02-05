@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <title>GK Analyzer v15 - Harmonized</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <style>
+        :root { --primary: #2c3e50; --accent: #3498db; --sap: #e67e22; --bg: #ecf0f1; --border: #bdc3c7; }
+        body { font-family: 'Segoe UI', Tahoma, sans-serif; margin: 0; display: flex; flex-direction: column; height: 100vh; background: var(--bg); overflow: hidden; }
+        
+        header { background: var(--primary); color: white; padding: 0 20px; height: 45px; display: flex; align-items: center; justify-content: space-between; flex-shrink: 0; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        .app-title { font-weight: bold; font-size: 15px; }
+        .global-btn { background: #27ae60; border: none; padding: 5px 12px; color: white; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 11px; }
+        
+        #main-container { display: flex; flex: 1; flex-direction: column; height: calc(100vh - 45px); overflow: hidden; }
+        
+        .panel { flex: 1; display: flex; flex-direction: column; background: white; min-height: 0; overflow: hidden; }
+        .panel-header { padding: 6px 10px; border-bottom: 1px solid #eee; background: #f9f9f9; display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; }
+        .panel-title { font-weight: bold; font-size: 12px; color: #555; }
+        
+        .panel-tabs { display: flex; gap: 2px; margin-top: 2px; border-bottom: 1px solid #ddd; padding: 0 10px; background: #f9f9f9; }
+        .ptab { padding: 4px 10px; font-size: 10px; cursor: pointer; background: #eee; border-radius: 4px 4px 0 0; color: #777; border: 1px solid transparent; margin-bottom: -1px; }
+        .ptab.active { background: white; color: #333; font-weight: bold; border-color: #ddd; border-bottom-color: white; }
+
+        .btn-load { padding: 3px 8px; border: 1px solid #ddd; border-radius: 3px; cursor: pointer; font-size: 10px; background: white; font-weight: bold; }
+        .btn-load:hover { background: #f0f0f0; }
+        .btn-xml { color: var(--accent); border-color: var(--accent); }
+        .btn-json { color: var(--sap); border-color: var(--sap); }
+
+        .data-view { flex: 1; overflow: auto; position: relative; display: none; }
+        .data-view.active { display: block; }
+
+        table { border-collapse: separate; border-spacing: 0; table-layout: fixed; width: 0; font-size: 11px; }
+        th { background: #f4f4f4; border-right: 1px solid #ccc; border-bottom: 2px solid #ddd; padding: 0; margin: 0; text-align: left; position: sticky; top: 0; z-index: 20; white-space: nowrap; overflow: hidden; min-width: 0 !important; height: 28px; }
+        .th-inner { padding: 6px 5px; width: 100%; box-sizing: border-box; cursor: grab; overflow: hidden; text-overflow: clip; display: flex; justify-content: space-between; }
+        .resizer { position: absolute; right: 0; top: 0; height: 100%; width: 5px; cursor: col-resize; z-index: 30; }
+        .resizer:hover { background: rgba(0,0,0,0.2); }
+        td { border-right: 1px solid #eee; border-bottom: 1px solid #eee; padding: 3px 6px; white-space: nowrap; overflow: hidden; text-overflow: clip; min-width: 0 !important; color: #333; }
+        tr:hover { background: #f1f8ff; }
+        th.drag-over { border-left: 3px solid orange !important; }
+
+        .divider { height: 8px; width: 100%; background: #e0e0e0; cursor: row-resize; z-index: 50; border-top: 1px solid #ccc; border-bottom: 1px solid #ccc; display: flex; justify-content: center; align-items: center; }
+        .divider::after { content: "•••"; color: #999; font-size: 10px; margin-top: -3px; }
+        .empty-state { padding: 30px; text-align: center; color: #aaa; font-size: 12px; }
+    </style>
+</head>
+<body>
+
+<header>
+    <div class="app-title">🖥️ GK Analyzer v15 <span style="font-weight:normal; opacity:0.7; font-size:12px;">| Harmonized</span></div>
+    <button class="global-btn" onclick="exportBoth()">📊 Export All</button>
+</header>
+
+<div id="main-container">
+    <div class="panel" id="panel-top" style="flex: 1;">
+        <div class="panel-header">
+            <div class="panel-title" style="color:#3498db;">🟦 GK POS (XML)</div>
+            <div style="display:flex; gap:5px;">
+                <input type="file" id="xmlInput" multiple webkitdirectory style="display:none">
+                <button class="btn-load btn-xml" onclick="document.getElementById('xmlInput').click()">📂 Load XML Folder</button>
+                <button class="btn-load" onclick="clearPanel('xml')">❌ Clear</button>
+            </div>
+        </div>
+        <div class="panel-tabs">
+            <div class="ptab active" onclick="switchTab('xml', 'overview')">Overview</div>
+            <div class="ptab" onclick="switchTab('xml', 'detail')">Detail Mapping</div>
+        </div>
+        <div id="xml-overview" class="data-view active">
+            <table id="xmlSumTable" style="width:100%"><thead><tr><th>Store / ID</th><th>Description</th><th>File</th></tr></thead><tbody id="xmlSumBody"></tbody></table>
+            <div id="xml-empty" class="empty-state">Waiting for XML files...</div>
+        </div>
+        <div id="xml-detail" class="data-view">
+            <div style="height:100%; overflow:auto;"><table id="xmlMapTable"><thead id="xmlMapHeader"></thead><tbody id="xmlMapBody"></tbody></table></div>
+        </div>
+    </div>
+
+    <div class="divider" id="drag-divider"></div>
+
+    <div class="panel" id="panel-bottom" style="flex: 1;">
+        <div class="panel-header">
+            <div class="panel-title" style="color:#e67e22;">🟧 SAP (JSON)</div>
+            <div style="display:flex; gap:5px;">
+                <input type="file" id="jsonInput" multiple accept=".json" style="display:none">
+                <button class="btn-load btn-json" onclick="document.getElementById('jsonInput').click()">📂 Load SAP JSON</button>
+                <button class="btn-load" onclick="clearPanel('json')">❌ Clear</button>
+            </div>
+        </div>
+        <div class="panel-tabs">
+            <div class="ptab active" onclick="switchTab('json', 'overview')">Overview</div>
+            <div class="ptab" onclick="switchTab('json', 'detail')">Detail Mapping</div>
+        </div>
+        <div id="json-overview" class="data-view active">
+            <table id="jsonSumTable" style="width:100%"><thead><tr><th>Hierarchy (ID)</th><th>Description / Type</th><th>Source</th></tr></thead><tbody id="jsonSumBody"></tbody></table>
+            <div id="json-empty" class="empty-state">Waiting for JSON files...</div>
+        </div>
+        <div id="json-detail" class="data-view">
+            <div style="height:100%; overflow:auto;"><table id="jsonMapTable"><thead id="jsonMapHeader"></thead><tbody id="jsonMapBody"></tbody></table></div>
+        </div>
+    </div>
+</div>
+
+<script>
+    const APP = {
+        xml: { data: [], keys: new Set(), visibleKeys: [], sort: { key: null, asc: true } },
+        json: { data: [], keys: new Set(), visibleKeys: [], sort: { key: null, asc: true } }
+    };
+
+    document.getElementById('xmlInput').addEventListener('change', (e) => processFiles(e.target.files, 'xml'));
+    document.getElementById('jsonInput').addEventListener('change', (e) => processFiles(e.target.files, 'json'));
+
+    async function processFiles(files, type) {
+        if(files.length === 0) return;
+        APP[type].data = []; APP[type].keys = new Set();
+        
+        for (let file of Array.from(files)) {
+            const text = await file.text();
+            let flatData = { "FileName": file.name };
+            
+            // --- GK XML PARSER (Cleaned) ---
+            if(type === 'xml') {
+                if(!file.name.toLowerCase().endsWith('.xml')) continue;
+                const xml = new DOMParser().parseFromString(text, "text/xml");
+                
+                // 1. Extract & Rename Core Fields
+                let promoID = xml.querySelector("PromotionID")?.textContent || "N/A";
+                let desc = xml.querySelector("Description")?.textContent || "";
+                
+                flatData["GK_Promo_ID"] = promoID; // Harmonized Name
+                flatData["Description"] = desc;
+
+                // 2. Extract Stores (Skip raw BusinessUnitID later)
+                let storeSet = new Set();
+                xml.querySelectorAll("BusinessUnitID").forEach(n => storeSet.add(n.textContent));
+                let storeList = Array.from(storeSet);
+                flatData["Store_List"] = storeList.join(","); // Harmonized Name
+
+                // 3. Extract Products (Skip raw ItemID later)
+                let prodSet = new Set();
+                xml.querySelectorAll("ItemID").forEach(n => prodSet.add(n.textContent));
+                flatData["Product_List"] = Array.from(prodSet).join(","); // Harmonized Name
+
+                // 4. Flatten the rest but skip what we extracted to avoid clutter
+                flattenXML_Smart(xml.documentElement, flatData);
+
+                APP[type].data.push({
+                    fileName: file.name,
+                    id: promoID,
+                    desc: desc,
+                    stores: storeList,
+                    flatData: flatData
+                });
+            } 
+            // --- SAP JSON PARSER (Cleaned) ---
+            else {
+                if(!file.name.toLowerCase().endsWith('.json')) continue;
+                try {
+                    const json = JSON.parse(text);
+                    if (json.RetailIncentiveERPStoreOfferReplicationBulkRequest_V1) {
+                        // Promotion Logic
+                        const root = json.RetailIncentiveERPStoreOfferReplicationBulkRequest_V1.RetailIncentiveERPStoreOfferReplicationRequestMessage_V1 || [];
+                        root.forEach(item => {
+                            let ri = item.RetailIncentive || {};
+                            let offer = ri.Offer || {};
+                            let promoID = ri.RetailEventID || "N/A";
+                            flatData["SAP_Promo_ID"] = promoID;
+
+                            // Stores
+                            let storeSet = new Set();
+                            (ri.SalesArea?.StoreGroup || []).forEach(sg => {
+                                if(sg.Store) sg.Store.forEach(s => storeSet.add(s.InternalID));
+                            });
+                            let storeList = Array.from(storeSet);
+                            flatData["Store_List"] = storeList.join(",");
+
+                            // Products
+                            let prodSet = new Set();
+                            (offer.Get?.ProductGroup || []).forEach(pg => {
+                                if(pg.Product) pg.Product.forEach(p => prodSet.add(p.InternalID));
+                            });
+                            flatData["Product_List"] = Array.from(prodSet).join(",");
+
+                            // Description
+                            let d = ri.Description?.[0]?.Description?.find(x => x["@languageCode"] === "en")?.["$"] || 
+                                    ri.Description?.[0]?.Description?.[0]?.["$"] || "";
+                            flatData["Description"] = d;
+
+                            flattenJSON_Smart(item, flatData, "");
+                            APP[type].data.push({ fileName: file.name, id: promoID, desc: d, stores: storeList, flatData: JSON.parse(JSON.stringify(flatData)) });
+                        });
+                    } else if (json.AssortmentSend_MT) {
+                        // Master Logic
+                        const list = json.AssortmentSend_MT.AssortmentList || [];
+                        list.forEach(item => {
+                            let sku = item.MATNR || "N/A";
+                            flatData["Article_ID"] = sku;
+                            flatData["Store_List"] = item.LOCNR || ""; // Use same key name
+                            
+                            let eans = [];
+                            if(item.UOM) item.UOM.forEach(u => { if(u.EAN) u.EAN.forEach(e => eans.push(e.EAN11)); });
+                            flatData["EAN_List"] = eans.join(",");
+                            
+                            let d = item.MATTEXT?.find(t => t.SPRAS === "E")?.MAKTX || "";
+                            flatData["Description"] = d;
+
+                            flattenJSON_Smart(item, flatData, "");
+                            APP[type].data.push({ fileName: file.name, id: sku, desc: d, stores: [item.LOCNR], flatData: JSON.parse(JSON.stringify(flatData)) });
+                        });
+                    }
+                } catch(e) { console.error(e); }
+            }
+        }
+
+        // Keys Update & Priority Sorting
+        APP[type].data.forEach(d => Object.keys(d.flatData).forEach(k => APP[type].keys.add(k)));
+        const priority = ["GK_Promo_ID", "SAP_Promo_ID", "Article_ID", "Description", "Store_List", "Product_List", "EAN_List"];
+        APP[type].visibleKeys = [
+            ...priority.filter(k => APP[type].keys.has(k)),
+            ...Array.from(APP[type].keys).filter(k => !priority.includes(k)).sort()
+        ];
+
+        document.getElementById(`${type}-empty`).style.display = 'none';
+        renderOverview(type);
+        renderDetail(type);
+    }
+
+    // --- SMART FLATTENERS ---
+    function flattenXML_Smart(node, res) {
+        // Skip tags we already processed manually to keep table clean
+        if (["PromotionID", "Description", "BusinessUnitAssignmentList", "BusinessUnitAssignment", "BusinessUnitID", "ItemID"].includes(node.nodeName)) return;
+
+        if(node.children.length === 0) {
+            const v = node.textContent.trim();
+            if(v) res[node.nodeName] = res[node.nodeName] ? res[node.nodeName]+','+v : v;
+        } else Array.from(node.children).forEach(c => flattenXML_Smart(c, res));
+    }
+
+    function flattenJSON_Smart(obj, res, prefix) {
+        for(let k in obj) {
+            if (["InternalID", "RetailEventID", "MATNR", "Description"].includes(k)) continue; // Skip duplicates
+            let v = obj[k];
+            if(typeof v === 'object' && v !== null) flattenJSON_Smart(v, res, k);
+            else res[k] = res[k] ? res[k]+','+v : ""+v;
+        }
+    }
+
+    // --- RENDERING & UI (Standard) ---
+    function renderOverview(type) {
+        const tbody = document.getElementById(`${type}SumBody`);
+        tbody.innerHTML = "";
+        let map = {};
+        APP[type].data.forEach(d => {
+            if(d.stores.length === 0) { if(!map['No Store']) map['No Store']=[]; map['No Store'].push(d); }
+            else d.stores.forEach(s => { if(!map[s]) map[s]=[]; map[s].push(d); });
+        });
+        Object.keys(map).sort().forEach(store => {
+            let tr = document.createElement('tr');
+            tr.className = 'sum-row';
+            tr.innerHTML = `<td colspan="3">▶ Store: ${store} (${map[store].length})</td>`;
+            tr.onclick = function() {
+                let next = this.nextSibling;
+                while(next && next.classList.contains('sum-child')) {
+                    next.style.display = next.style.display === 'none' ? 'table-row' : 'none';
+                    next = next.nextSibling;
+                }
+            };
+            tbody.appendChild(tr);
+            map[store].forEach(d => {
+                let cr = document.createElement('tr');
+                cr.className = 'sum-child'; cr.style.display = 'none';
+                cr.innerHTML = `<td>${d.id}</td><td>${d.desc.substring(0,50)}</td><td>${d.fileName}</td>`;
+                tbody.appendChild(cr);
+            });
+        });
+    }
+
+    function renderDetail(type) {
+        const thead = document.getElementById(`${type}MapHeader`);
+        const tbody = document.getElementById(`${type}MapBody`);
+        const keys = APP[type].visibleKeys;
+        
+        thead.innerHTML = `<tr>${keys.map(k => `
+            <th style="width: 100px;" draggable="true" data-key="${k}" data-type="${type}">
+                <div class="th-inner" onclick="doSort('${type}', '${k}')">
+                    <span>${k}</span> <span style="font-size:9px">${APP[type].sort.key===k ? (APP[type].sort.asc?'▲':'▼'):''}</span>
+                </div>
+                <div class="resizer"></div>
+            </th>`).join('')}</tr>`;
+
+        tbody.innerHTML = APP[type].data.map(d => `<tr>${keys.map(k => `<td>${d.flatData[k] || ''}</td>`).join('')}</tr>`).join('');
+        attachEvents(type);
+    }
+
+    function attachEvents(type) {
+        document.querySelectorAll(`#${type}MapHeader th`).forEach(th => {
+            const resizer = th.querySelector('.resizer');
+            const k = th.dataset.key;
+            let dragSrc = null;
+            resizer.addEventListener('mousedown', (e) => {
+                e.stopPropagation();
+                const startX = e.pageX, startW = th.offsetWidth;
+                const mm = (me) => th.style.width = Math.max(0, startW + (me.pageX - startX)) + 'px';
+                const mu = () => { document.removeEventListener('mousemove', mm); document.removeEventListener('mouseup', mu); };
+                document.addEventListener('mousemove', mm); document.addEventListener('mouseup', mu);
+            });
+            resizer.addEventListener('dblclick', (e) => {
+                e.stopPropagation();
+                let max = k.length;
+                APP[type].data.forEach(d => { if((d.flatData[k]||"").length > max) max = (d.flatData[k]||"").length; });
+                th.style.width = (max * 7 + 20) + "px";
+            });
+            th.addEventListener('dragstart', (e) => { dragSrc = k; e.dataTransfer.effectAllowed='move'; });
+            th.addEventListener('dragover', (e) => { e.preventDefault(); th.classList.add('drag-over'); });
+            th.addEventListener('dragleave', () => th.classList.remove('drag-over'));
+            th.addEventListener('drop', (e) => {
+                e.preventDefault(); th.classList.remove('drag-over');
+                if(dragSrc !== k) {
+                    const arr = APP[type].visibleKeys;
+                    arr.splice(arr.indexOf(k), 0, arr.splice(arr.indexOf(dragSrc), 1)[0]);
+                    renderDetail(type);
+                }
+            });
+        });
+    }
+
+    function doSort(type, key) {
+        let s = APP[type].sort;
+        s.asc = s.key === key ? !s.asc : true; s.key = key;
+        APP[type].data.sort((a,b) => (a.flatData[key]||"").localeCompare(b.flatData[key]||"") * (s.asc?1:-1));
+        renderDetail(type);
+    }
+
+    function switchTab(type, view) {
+        document.querySelectorAll(`#panel-${type==='xml'?'top':'bottom'} .ptab`).forEach(el => el.classList.remove('active'));
+        event.target.classList.add('active');
+        document.querySelectorAll(`#panel-${type==='xml'?'top':'bottom'} .data-view`).forEach(el => el.classList.remove('active'));
+        document.getElementById(`${type}-${view}`).classList.add('active');
+    }
+
+    function clearPanel(type) {
+        APP[type].data = []; APP[type].keys = new Set();
+        renderOverview(type); renderDetail(type);
+        document.getElementById(`${type}-empty`).style.display = 'block';
+    }
+
+    function exportBoth() {
+        const wb = XLSX.utils.book_new();
+        if(APP.xml.data.length) XLSX.utils.book_append_sheet(wb, XLSX.utils.table_to_book(document.getElementById('xmlMapTable')).Sheets.Sheet1, "GK_XML");
+        if(APP.json.data.length) XLSX.utils.book_append_sheet(wb, XLSX.utils.table_to_book(document.getElementById('jsonMapTable')).Sheets.Sheet1, "SAP_JSON");
+        XLSX.writeFile(wb, "GK_Analysis_v15_Harmonized.xlsx");
+    }
+
+    const divider = document.getElementById('drag-divider');
+    let isDragging = false;
+    divider.addEventListener('mousedown', () => { isDragging = true; document.body.style.cursor = 'row-resize'; });
+    document.addEventListener('mousemove', (e) => {
+        if(!isDragging) return;
+        const pct = (e.clientY / document.getElementById('main-container').offsetHeight) * 100;
+        if(pct > 10 && pct < 90) { document.getElementById('panel-top').style.flex = `0 0 ${pct}%`; document.getElementById('panel-bottom').style.flex = `1`; }
+    });
+    document.addEventListener('mouseup', () => { isDragging = false; document.body.style.cursor = 'default'; });
+</script>
+</body>
+</html>
