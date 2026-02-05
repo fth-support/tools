@@ -2,7 +2,7 @@
 <html lang="th">
 <head>
     <meta charset="UTF-8">
-    <title>GK Analyzer v30 - Perfect Mirror</title>
+    <title>GK Analyzer v30 - Complete Mirror</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <style>
         :root { --primary: #2c3e50; --accent: #27ae60; --sap: #e67e22; --gk: #8e44ad; --bg: #ecf0f1; }
@@ -22,7 +22,7 @@
         .th-inner { padding: 8px; display: flex; align-items: center; justify-content: space-between; }
         td { border: 1px solid #eee; padding: 4px 6px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; height: 25px; }
         .draggable-header { cursor: grab; background: #fffbe6; }
-        th.drag-over { background: #e8f8f5 !important; border: 2px dashed #27ae60 !important; color: #27ae60; }
+        th.drag-over { background: #e8f8f5 !important; border: 2px dashed #27ae60 !important; }
         .mapped-badge { font-size: 9px; background: #dff0d8; color: #3c763d; padding: 1px 3px; border-radius: 3px; margin-left: 5px; font-weight: normal; }
         td.empty-cell { background-color: #fff0f0; }
         .view-section { display: none; flex: 1; flex-direction: column; height: 100%; }
@@ -36,7 +36,7 @@
     <div class="tabs">
         <div class="tab" onclick="switchMainTab('bi')">1. BI Overview</div>
         <div class="tab" onclick="switchMainTab('promo')">2. Promo Compare</div>
-        <div class="tab active" onclick="switchMainTab('master')">3. Master (Full XML)</div>
+        <div class="tab active" onclick="switchMainTab('master')">3. Master (Final Mirror)</div>
     </div>
 </nav>
 
@@ -50,7 +50,7 @@
                 <div class="toolbar">
                     <b style="color:var(--sap);">🟧 SAP Source (Sku.json)</b>
                     <input type="file" id="skuInput" accept=".json" style="font-size:11px;">
-                    <span style="font-size:10px; color:#666; margin-left:auto;">* Drag columns to map below</span>
+                    <span style="font-size:10px; color:#666; margin-left:auto;">* Drag columns from here</span>
                 </div>
                 <div class="table-wrapper"><table id="sapTable"><thead id="sapHead"></thead><tbody id="sapBody"></tbody></table></div>
             </div>
@@ -59,8 +59,8 @@
 
             <div class="panel" id="p-bottom">
                 <div class="toolbar">
-                    <b style="color:var(--gk);">🟪 GK Target (Haribo Blueprint)</b>
-                    <button class="btn-green" onclick="exportMasterXML()">⬇ Export XML (100% Mirror)</button>
+                    <b style="color:var(--gk);">🟪 GK Mirror Target (Haribo Exact Structure)</b>
+                    <button class="btn-green" onclick="exportMasterXML()">⬇ Export 100% Mirror XML</button>
                     <button class="btn-tool" onclick="resetMapping()" style="margin-left:5px; font-size:10px;">↺ Reset</button>
                 </div>
                 <div class="table-wrapper"><table id="gkTable"><thead id="gkHead"></thead><tbody id="gkBody"></tbody></table></div>
@@ -70,7 +70,7 @@
 </div>
 
 <script>
-    // FULL SCHEMA อิงตามไฟล์ Haribo.xml เป๊ะๆ (ใช้สำหรับ Table View และ Mapping Key)
+    // FULL SCHEMA: รวมทุกฟิลด์ที่ต้องใช้ในการ Map และ Display
     const GK_SCHEMA = [
         "BusinessUnitID", "ItemID", "BonText", "Description", "TaxGroupID", "UpdateStockFlag", 
         "BaseUOMCode", "MinimumShelfLifeDayCount", "ClassCode", "TaxExemptCode", "WarrantyPeriod", 
@@ -94,8 +94,10 @@
         "TaxGroupID": "CONST_A1", "UpdateStockFlag": "CONST_true", "ClassCode": "CONST_HAWA",
         "UOMCode": "MEINH", "DefaultSellingUOMCode": "MEINH",
         "BaseUOMConsumerPackageContentsUOMCode": "MEINH", "BaseUOMConsumerPackageBasePriceContentsUOMCode": "MEINH",
-        "ConsumerPackageWeightUOMCode": "CONST_ST", "ConsumerPackageSizeUOMCode": "MEINH", "ConsumerPackageBasePriceUOMCode": "MEINH",
-        "PosItemID": "EAN_List", "PosIdentityTypeCode": "CONST_10"
+        "ConsumerPackageWeightUOMCode": "CONST_ST", "ConsumerPackageSizeUOMCode": "MEINH", 
+        "ConsumerPackageBasePriceUOMCode": "MEINH", "PosItemID": "EAN_List", "PosIdentityTypeCode": "CONST_10",
+        "MerchandiseHierarchyGroupID": "MATKL", "MainMerchandiseHierarchyGroupID": "MATKL",
+        "CostItemFlag": "CONST_true" // Haribo example has true
     };
 
     let APP = { sapData: [], sapKeys: [], currentMap: {...DEFAULT_MAP}, gkData: [] };
@@ -174,7 +176,7 @@
 
     function resetMapping() { APP.currentMap = {...DEFAULT_MAP}; applyMapping(); }
 
-    // --- XML EXPORT (FORCED TAGS) ---
+    // --- XML EXPORT (STRICT MIRROR) ---
     function exportMasterXML() {
         if(!APP.gkData.length) return alert("Please load data first");
         let xml = `<?xml version="1.0" encoding="UTF-8"?>\n<ItemList xmlns:importDomain="http://www.gk-software.com/storeweaver/master_data/import_domain/2.2.0" xsi:schemaLocation="http://www.gk-software.com/storeweaver/master_data/item/3.4.0 xsd/masterData_Item.xsd" NumberOfItems="${APP.gkData.length}" xmlns="http://www.gk-software.com/storeweaver/master_data/item/3.4.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">\n`;
@@ -182,7 +184,7 @@
         APP.gkData.forEach(r => {
             xml += `\t<Item ChangeType="DIRECT">\n`;
             
-            // 1. Root Level Fields
+            // 1. Root Level Fields (เรียงตาม Haribo)
             xml += `\t\t<BusinessUnitAssignment>\n\t\t\t<BusinessUnitID>${r.BusinessUnitID || ''}</BusinessUnitID>\n\t\t</BusinessUnitAssignment>\n`;
             xml += `\t\t<ItemID>${r.ItemID || ''}</ItemID>\n`;
             xml += `\t\t<BonText>${escapeXml(r.BonText || '')}</BonText>\n`;
@@ -196,8 +198,6 @@
             xml += `\t\t<WarrantyPeriod>${r.WarrantyPeriod || '0'}</WarrantyPeriod>\n`;
             xml += `\t\t<LabelType>${r.LabelType || 'HAWA'}</LabelType>\n`;
             xml += `\t\t<ItemUsageTypeCode>${r.ItemUsageTypeCode || '00'}</ItemUsageTypeCode>\n`;
-            
-            // Optional Fields (But forced empty if null to match Haribo structure if needed)
             xml += `\t\t<GlobalLifeDayCount>${r.GlobalLifeDayCount || '0'}</GlobalLifeDayCount>\n`;
             xml += `\t\t<ShelfLifeDayCountPercent>${r.ShelfLifeDayCountPercent || '0'}</ShelfLifeDayCountPercent>\n`;
             xml += `\t\t<PhoneCardLoadingTypeCode>${r.PhoneCardLoadingTypeCode || '00'}</PhoneCardLoadingTypeCode>\n`;
@@ -212,22 +212,20 @@
             xml += `\t\t<BaseUOMConsumerPackageBasePriceContent>${r.BaseUOMConsumerPackageBasePriceContent || '1'}</BaseUOMConsumerPackageBasePriceContent>\n`;
             xml += `\t\t<BaseUOMConsumerPackageBasePriceContentsUOMCode>${r.BaseUOMConsumerPackageBasePriceContentsUOMCode || r.BaseUOMCode || ''}</BaseUOMConsumerPackageBasePriceContentsUOMCode>\n`;
             
-            // The fields you mentioned were missing:
+            // Missing fields restored!
             xml += `\t\t<DistributingWarehouseID>${r.DistributingWarehouseID || ''}</DistributingWarehouseID>\n`;
             xml += `\t\t<AssortmentID>${r.AssortmentID || ''}</AssortmentID>\n`;
             xml += `\t\t<ThirdPartyAssortmentID>${r.ThirdPartyAssortmentID || ''}</ThirdPartyAssortmentID>\n`;
             xml += `\t\t<TransportAssociationID>${r.TransportAssociationID || '0'}</TransportAssociationID>\n`;
             xml += `\t\t<DefaultSellingUOMCode>${r.DefaultSellingUOMCode || r.BaseUOMCode || ''}</DefaultSellingUOMCode>\n`;
             
-            // 2. ItemTextList (Generated)
-            xml += `\t\t<ItemTextList>\n`;
-            xml += `\t\t\t<ItemText><TextClass>KTXT</TextClass><Text>${escapeXml(r.BonText||'')}</Text><TextNumber>1</TextNumber></ItemText>\n`;
-            xml += `\t\t</ItemTextList>\n`;
+            // 2. ItemTextList
+            xml += `\t\t<ItemTextList>\n\t\t\t<ItemText>\n\t\t\t\t<TextClass>KTXT</TextClass>\n\t\t\t\t<Text>${escapeXml(r.BonText||'')}</Text>\n\t\t\t\t<TextNumber>1</TextNumber>\n\t\t\t</ItemText>\n\t\t</ItemTextList>\n`;
             
             // 3. BulkItem
-            xml += `\t\t<BulkItem><TareID>0</TareID><AfterPackLeftLifeDayCount>0</AfterPackLeftLifeDayCount><ScalesFlag>false</ScalesFlag><LabellingMachineFlag>false</LabellingMachineFlag></BulkItem>\n`;
+            xml += `\t\t<BulkItem>\n\t\t\t<TareID>0</TareID>\n\t\t\t<AfterPackLeftLifeDayCount>0</AfterPackLeftLifeDayCount>\n\t\t\t<ScalesFlag>false</ScalesFlag>\n\t\t\t<LabellingMachineFlag>false</LabellingMachineFlag>\n\t\t</BulkItem>\n`;
 
-            // 4. UOMItemList (Complex)
+            // 4. UOMItemList
             xml += `\t\t<UOMItemList>\n\t\t\t<UOMItem>\n`;
             xml += `\t\t\t\t<UOMCode>${r.UOMCode || r.BaseUOMCode || ''}</UOMCode>\n`;
             xml += `\t\t\t\t<ConversionNumerator>${r.ConversionNumerator || '1'}</ConversionNumerator>\n`;
@@ -246,26 +244,32 @@
             xml += `\t\t\t\t<MainMerchandiseHierarchyGroupID>${r.MainMerchandiseHierarchyGroupID || r.MerchandiseHierarchyGroupID || ''}</MainMerchandiseHierarchyGroupID>\n`;
             
             // Nested Rules
-            xml += `\t\t\t\t<ItemSellingRule><ProhibitReturnFlag>true</ProhibitReturnFlag><PriceEntryRequiredFlag>false</PriceEntryRequiredFlag><AllowFoodStampFlag>false</AllowFoodStampFlag><WICFlag>false</WICFlag><AuthorizedForSaleFlag>true</AuthorizedForSaleFlag><DiscountFlag>false</DiscountFlag><BonuspointsFlag>true</BonuspointsFlag><QuantityInputTypeCode>${r.QuantityInputTypeCode || '00'}</QuantityInputTypeCode><QuantityInputMethod>${r.QuantityInputMethod || '01'}</QuantityInputMethod><PriceChangeTypeCode>00</PriceChangeTypeCode><WeightEntryRequiredFlag>false</WeightEntryRequiredFlag></ItemSellingRule>\n`;
+            xml += `\t\t\t\t<ItemSellingRule>\n\t\t\t\t\t<ProhibitReturnFlag>true</ProhibitReturnFlag>\n\t\t\t\t\t<PriceEntryRequiredFlag>false</PriceEntryRequiredFlag>\n\t\t\t\t\t<AllowFoodStampFlag>false</AllowFoodStampFlag>\n\t\t\t\t\t<WICFlag>false</WICFlag>\n\t\t\t\t\t<AuthorizedForSaleFlag>true</AuthorizedForSaleFlag>\n\t\t\t\t\t<DiscountFlag>false</DiscountFlag>\n\t\t\t\t\t<BonuspointsFlag>true</BonuspointsFlag>\n\t\t\t\t\t<QuantityInputTypeCode>${r.QuantityInputTypeCode || '00'}</QuantityInputTypeCode>\n\t\t\t\t\t<QuantityInputMethod>${r.QuantityInputMethod || '01'}</QuantityInputMethod>\n\t\t\t\t\t<PriceChangeTypeCode>00</PriceChangeTypeCode>\n\t\t\t\t\t<WeightEntryRequiredFlag>false</WeightEntryRequiredFlag>\n\t\t\t\t</ItemSellingRule>\n`;
             
-            xml += `\t\t\t\t<ItemMerchandiseManagementRule><PriceEntryRequiredFlag>false</PriceEntryRequiredFlag><QuantityInputTypeCode>00</QuantityInputTypeCode><WeightEntryRequiredFlag>false</WeightEntryRequiredFlag><DefaultLayoutClass>STST</DefaultLayoutClass><DefaultLabelCount>1</DefaultLabelCount></ItemMerchandiseManagementRule>\n`;
+            xml += `\t\t\t\t<ItemMerchandiseManagementRule>\n\t\t\t\t\t<PriceEntryRequiredFlag>false</PriceEntryRequiredFlag>\n\t\t\t\t\t<QuantityInputTypeCode>00</QuantityInputTypeCode>\n\t\t\t\t\t<WeightEntryRequiredFlag>false</WeightEntryRequiredFlag>\n\t\t\t\t\t<DefaultLayoutClass>STST</DefaultLayoutClass>\n\t\t\t\t\t<DefaultLabelCount>1</DefaultLabelCount>\n\t\t\t\t</ItemMerchandiseManagementRule>\n`;
             
-            xml += `\t\t\t\t<PriceList><Price><Price>${r.Price || '0'}</Price><EffectiveDate>${r.EffectiveDate || '2009-01-01T00:00:00'}</EffectiveDate><ExpirationDate>${r.ExpirationDate || '2099-12-31T00:00:00'}</ExpirationDate><PriceTypeCode>${r.PriceTypeCode || '01'}</PriceTypeCode></Price></PriceList>\n`;
+            xml += `\t\t\t\t<PriceList>\n\t\t\t\t\t<Price>\n\t\t\t\t\t\t<Price>${r.Price || '0'}</Price>\n\t\t\t\t\t\t<EffectiveDate>${r.EffectiveDate || '2009-01-01T00:00:00'}</EffectiveDate>\n\t\t\t\t\t\t<ExpirationDate>${r.ExpirationDate || '2099-12-31T00:00:00'}</ExpirationDate>\n\t\t\t\t\t\t<PriceTypeCode>${r.PriceTypeCode || '01'}</PriceTypeCode>\n\t\t\t\t\t</Price>\n\t\t\t\t</PriceList>\n`;
             
-            xml += `\t\t\t\t<EANList><EAN><PosItemID>${r.PosItemID || r.MainPOSItemID || ''}</PosItemID><PosIdentityTypeCode>${r.PosIdentityTypeCode || '10'}</PosIdentityTypeCode></EAN></EANList>\n`;
+            xml += `\t\t\t\t<EANList>\n\t\t\t\t\t<EAN>\n\t\t\t\t\t\t<PosItemID>${r.PosItemID || r.MainPOSItemID || ''}</PosItemID>\n\t\t\t\t\t\t<PosIdentityTypeCode>${r.PosIdentityTypeCode || '10'}</PosIdentityTypeCode>\n\t\t\t\t\t</EAN>\n\t\t\t\t</EANList>\n`;
             
-            // Empty Lists to match structure
+            // Empty Lists (Explicitly added!)
             xml += `\t\t\t\t<SalesRestrictionList/>\n`;
             xml += `\t\t\t\t<ItemDepositCollectionList/>\n`;
-            xml += `\t\t\t\t<UOMItemTextList>\n\t\t\t\t\t<UOMItemText><TextNumber>1</TextNumber><TextClass>KTXT</TextClass><LanguageID>en_US</LanguageID><Text>${escapeXml(r.BonText||'')}</Text></UOMItemText>\n\t\t\t\t</UOMItemTextList>\n`;
+            
+            xml += `\t\t\t\t<UOMItemTextList>\n\t\t\t\t\t<UOMItemText>\n\t\t\t\t\t\t<TextNumber>1</TextNumber>\n\t\t\t\t\t\t<TextClass>KTXT</TextClass>\n\t\t\t\t\t\t<LanguageID>en_US</LanguageID>\n\t\t\t\t\t\t<Text>${escapeXml(r.BonText||'')}</Text>\n\t\t\t\t\t</UOMItemText>\n\t\t\t\t</UOMItemTextList>\n`;
+            
+            xml += `\t\t\t\t<ItemMHGList>\n\t\t\t\t\t<ItemMHG>\n\t\t\t\t\t\t<MerchandiseHierarchyGroupID>${r.MerchandiseHierarchyGroupID || ''}</MerchandiseHierarchyGroupID>\n\t\t\t\t\t\t<MerchandiseHierarchyGroupIDQualifier>MAIN</MerchandiseHierarchyGroupIDQualifier>\n\t\t\t\t\t</ItemMHG>\n\t\t\t\t</ItemMHGList>\n`;
             
             xml += `\t\t\t</UOMItem>\n\t\t</UOMItemList>\n`;
             
-            // 5. Final Assignments
+            // Final Assignments
             if (r.MerchandiseHierarchyGroupID) {
                 xml += `\t\t<MerchandiseHierarchyGroupAssignment>\n\t\t\t<MerchandiseHierarchyGroupID>${r.MerchandiseHierarchyGroupID}</MerchandiseHierarchyGroupID>\n\t\t\t<MerchandiseHierarchyGroupIDQualifier>MAIN</MerchandiseHierarchyGroupIDQualifier>\n\t\t</MerchandiseHierarchyGroupAssignment>\n`;
             }
-            xml += `\t\t<RegularSalesUnitPrice>${r.Price || '0'}</RegularSalesUnitPrice>\n`;
+            // RegularSalesUnitPrice at the end
+            if(r.Price && r.Price !== "0") {
+                xml += `\t\t<RegularSalesUnitPrice>${r.Price}</RegularSalesUnitPrice>\n`;
+            }
             
             xml += `\t</Item>\n`;
         });
@@ -273,7 +277,7 @@
         xml += `</ItemList>`;
         const a = document.createElement('a');
         a.href = URL.createObjectURL(new Blob([xml], {type: 'text/xml'}));
-        a.download = "ItemMasterData_FinalMirror.xml";
+        a.download = "ItemMasterData_PerfectMirror.xml";
         a.click();
     }
 
