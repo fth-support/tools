@@ -2,7 +2,7 @@
 <html lang="th">
 <head>
     <meta charset="UTF-8">
-    <title>GK Analyzer v18 - Deep Price Match</title>
+    <title>GK Analyzer v19 - Seamless Integration</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <style>
         :root { --primary: #217346; --accent: #107c41; --sap: #e67e22; --bg: #f3f2f1; --border: #e1dfdd; }
@@ -50,7 +50,7 @@
 <body>
 
 <header>
-    <div class="app-title">📊 GK Analyzer v18 - Deep Price Match</div>
+    <div class="app-title">📊 GK Analyzer v19 - Seamless Integration (Comma)</div>
     <button class="global-btn" onclick="exportExcel()">⬇ Export Excel</button>
 </header>
 
@@ -113,7 +113,6 @@
                     
                     items.forEach(item => {
                         let subRow = { "FileName": file.name };
-                        // Deep Flatten including $ keys for PriceAmount
                         flattenJSON_Deep(item, subRow, "");
                         APP[type].data.push(subRow);
                     });
@@ -121,23 +120,18 @@
             }
         }
 
-        // Collect Keys & Prioritize Price/Discount
+        // Collect Keys & Prioritize
         APP[type].data.forEach(r => Object.keys(r).forEach(k => allKeys.add(k)));
         
         let priority = [];
         if(type === 'xml') {
              priority = ["FileName", "PromotionID", "BusinessUnitID", "GK_Promo_ID", "Description", "PriceModificationAmount", "NewPriceAmount"];
         } else {
-             // SAP Priority Keys based on your Excel
              priority = [
-                 "FileName", 
-                 "RetailIncentive.RetailEventID", 
-                 "RetailIncentive.Description.0.Description.0.$", 
-                 // Match the PriceAmount path structure found in Excel
+                 "FileName", "RetailIncentive.RetailEventID", "RetailIncentive.Description.0.Description.0.$", 
                  "RetailIncentive.Offer.Get.ProductGroup.PriceAmount.$", 
                  "RetailIncentive.Offer.Get.ProductGroup.DiscountPercent",
-                 "RetailIncentive.Offer.Get.ProductGroup.DiscountAmount.$",
-                 "RetailIncentive.Offer.Buy.ProductGroup.PriceAmount.$"
+                 "RetailIncentive.Offer.Get.ProductGroup.DiscountAmount.$"
              ];
         }
 
@@ -148,7 +142,7 @@
         document.getElementById(`${type}-status`).textContent = `${APP[type].data.length} records`;
     }
 
-    // --- XML FLATTENER ---
+    // --- XML FLATTENER (Comma) ---
     function flattenXML_ExcelStyle(node, res, prefix = "") {
         if (node.children.length === 0) {
             let val = node.textContent.trim();
@@ -159,6 +153,7 @@
                     let parent = prefix.split('_').filter(p=>p).pop(); 
                     if(parent) key = parent + "_" + key;
                 }
+                // Use COMMA
                 res[key] = res[key] ? res[key] + "," + val : val;
             }
         } else {
@@ -172,40 +167,32 @@
         }
     }
 
-    // --- JSON DEEP FLATTENER (Fix for PriceAmount) ---
+    // --- JSON DEEP FLATTENER (Comma) ---
     function flattenJSON_Deep(obj, res, prefix) {
         for (let k in obj) {
             let v = obj[k];
-            // Build key path. If key is '$', we append it to distinguish value from object
             let newKey = prefix ? (k === "$" ? prefix + ".$" : prefix + "." + k) : k;
-            
-            // Clean up key (Optional: make it look like Excel headers)
-            // e.g., RetailIncentive.Offer -> Offer
-            // newKey = newKey.replace("RetailIncentive.", ""); 
 
             if (v === null) continue;
 
             if (Array.isArray(v)) {
                 if (v.length > 0 && typeof v[0] === 'object') {
                     // ARRAY OF OBJECTS: Deep dive and aggregate
-                    // We extract all unique keys from objects in the array
                     let subKeys = new Set();
                     v.forEach(item => flattenKeys(item, "", subKeys));
                     
                     subKeys.forEach(sk => {
-                        // Construct the full path for this sub-key
                         let fullSubKey = newKey + (sk.startsWith(".") ? "" : ".") + sk;
                         
-                        // Extract values from each item in array and join
                         let values = v.map(item => {
                             let val = getDeepValue(item, sk);
                             return val !== undefined ? val : "";
-                        }).filter(val => val !== "").join(" | ");
+                        }).filter(val => val !== "").join(","); // <--- CHANGE TO COMMA HERE
                         
                         if(values !== "") res[fullSubKey] = values;
                     });
                 } else {
-                    res[newKey] = v.join(", ");
+                    res[newKey] = v.join(","); // <--- CHANGE TO COMMA HERE
                 }
             } 
             else if (typeof v === 'object') {
@@ -217,7 +204,6 @@
         }
     }
 
-    // Helper to find keys in nested object
     function flattenKeys(obj, prefix, set) {
         for(let k in obj) {
             let p = prefix ? (k==="$" ? prefix+".$" : prefix+"."+k) : k;
@@ -229,10 +215,8 @@
         }
     }
 
-    // Helper to get value by dot notation path
     function getDeepValue(obj, path) {
         return path.split('.').reduce((o, i) => {
-            // Handle $ key specifically
             if(i === "$") return o && o["$"];
             return o ? o[i] : undefined; 
         }, obj);
@@ -258,7 +242,6 @@
     }
 
     function formatHeader(k) {
-        // Shorten SAP headers for UI
         return k.replace('RetailIncentiveERPStoreOfferReplicationBulkRequest_V1.', '')
                 .replace('RetailIncentive.', '')
                 .replace('Offer.Get.', 'Get.')
@@ -324,7 +307,7 @@
         const wb = XLSX.utils.book_new();
         if(APP.xml.data.length) XLSX.utils.book_append_sheet(wb, XLSX.utils.table_to_book(document.getElementById('xmlTable')), "GK_XML");
         if(APP.json.data.length) XLSX.utils.book_append_sheet(wb, XLSX.utils.table_to_book(document.getElementById('jsonTable')), "SAP_JSON");
-        XLSX.writeFile(wb, "GK_SAP_Deep_Flat.xlsx");
+        XLSX.writeFile(wb, "GK_Analysis_v19.xlsx");
     }
 </script>
 </body>
