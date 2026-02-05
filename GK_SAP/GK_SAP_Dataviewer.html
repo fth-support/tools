@@ -2,10 +2,10 @@
 <html lang="th">
 <head>
     <meta charset="UTF-8">
-    <title>GK Analyzer v24 - Price Fixed</title>
+    <title>GK Analyzer v25 - XML Master</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <style>
-        :root { --primary: #2c3e50; --accent: #27ae60; --sap: #e67e22; --gk: #2980b9; --bg: #ecf0f1; --border: #bdc3c7; }
+        :root { --primary: #2c3e50; --accent: #27ae60; --sap: #e67e22; --gk: #8e44ad; --bg: #ecf0f1; --border: #bdc3c7; }
         body { font-family: 'Segoe UI', Tahoma, sans-serif; margin: 0; display: flex; flex-direction: column; height: 100vh; background: var(--bg); overflow: hidden; }
         
         nav { background: var(--primary); color: white; display: flex; padding: 0 15px; height: 45px; align-items: center; justify-content: space-between; flex-shrink: 0; }
@@ -29,8 +29,9 @@
         .btn-tool { padding: 5px 10px; border: 1px solid #ccc; background: white; cursor: pointer; font-size: 11px; border-radius: 3px; font-weight: 600; transition: 0.2s; }
         .btn-tool:hover { background: #eee; }
         .btn-green { background: var(--accent); color: white; border: none; }
-        .btn-blue { background: var(--gk); color: white; border: none; }
+        .btn-purple { background: var(--gk); color: white; border: none; }
         .btn-orange { background: var(--sap); color: white; border: none; }
+        .btn-blue { background: #2980b9; color: white; border: none; }
 
         .table-wrapper { flex: 1; overflow: auto; background: white; padding: 0; }
         table { border-collapse: collapse; min-width: 100%; font-size: 11px; table-layout: fixed; width: 0; }
@@ -45,7 +46,6 @@
         td { border: 1px solid #eee; padding: 4px 6px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: #333; height: 22px; }
         tr:hover { background: #f0f8ff; }
         
-        /* Drag & Drop */
         .draggable-header { cursor: grab; }
         .draggable-header:active { cursor: grabbing; }
         th.drag-over { background: #e8f8f5 !important; border: 2px dashed #27ae60 !important; color: #27ae60; }
@@ -60,11 +60,11 @@
 <body>
 
 <nav>
-    <div class="app-title">📦 GK Analyzer v24</div>
+    <div class="app-title">📦 GK Analyzer v25 - XML Importer</div>
     <div class="tabs">
         <div class="tab" onclick="switchMainTab('bi')">1. BI Overview</div>
         <div class="tab" onclick="switchMainTab('promo')">2. Promo (Compare)</div>
-        <div class="tab active" onclick="switchMainTab('master')">3. Master (Mapper)</div>
+        <div class="tab active" onclick="switchMainTab('master')">3. Master (XML Map)</div>
     </div>
 </nav>
 
@@ -72,8 +72,7 @@
 
     <div id="view-bi" class="view-section">
         <div class="toolbar">
-            <b>BI Overview (Store & ID Summary)</b>
-            <span style="color:#666; font-size:10px; margin-left:10px;">*Displays data loaded in Tab 2</span>
+            <b>BI Overview</b><span style="color:#666; font-size:10px; margin-left:10px;">*Displays data from Tab 2</span>
         </div>
         <div class="table-wrapper">
             <table id="biTable" style="width:100%"><thead><tr><th>Hierarchy (Store / ID)</th><th>Description</th><th>Source File</th></tr></thead><tbody id="biBody"></tbody></table>
@@ -113,7 +112,7 @@
                     <b style="color:#e67e22;">🟧 SAP Source (Master JSON)</b>
                     <button class="btn-tool" onclick="document.getElementById('skuInput').click()">📂 Load Sku.json</button>
                     <input type="file" id="skuInput" multiple accept=".json" style="display:none">
-                    <span style="margin-left:auto; font-size:10px; color:#666;">* Drag columns from here to below</span>
+                    <span style="margin-left:auto; font-size:10px; color:#666;">* Drag columns to map</span>
                 </div>
                 <div class="table-wrapper"><table id="sapMasterTable"><thead id="sapMasterHead"></thead><tbody id="sapMasterBody"></tbody></table></div>
             </div>
@@ -122,9 +121,9 @@
 
             <div class="panel" id="panel-master-bottom" style="flex:1;">
                 <div class="toolbar">
-                    <b style="color:#2980b9;">🟦 GK Target (CSV Template)</b>
+                    <b style="color:#8e44ad;">🟪 GK Target (XML Template)</b>
                     <button class="btn-tool" onclick="resetMasterMapping()">↺ Reset</button>
-                    <button class="btn-tool btn-green" onclick="exportMasterCSV()">⬇ Export Import File (;)</button>
+                    <button class="btn-tool btn-green" onclick="exportMasterXML()">⬇ Export XML</button>
                     <span id="master-status" style="margin-left:auto; font-size:10px; color:#666;">Ready</span>
                 </div>
                 <div class="table-wrapper"><table id="gkMasterTable"><thead id="gkMasterHead"></thead><tbody id="gkMasterBody"></tbody></table></div>
@@ -137,22 +136,30 @@
 <script>
     // --- STATE MANAGEMENT ---
     const PROMO = { xml: { data: [], columns: [] }, json: { data: [], columns: [] } };
+    
+    // Config for Tab 3 (XML Target)
     const MASTER = {
         sapData: [], sapKeys: [], gkData: [], currentMap: {},
+        // These keys represent XML Tags. Hierarchical structures are flattened for mapping UI.
         gkColumns: [
-            "BusinessUnitId", "ItemId", "GTIN", "UomCode", "Name", "Description", 
-            "TaxGroupId", "MerchandiseHierarchyGroupId", "Price", 
-            "ShelfNumber", "ShelfLocation", "ActionPrice", 
-            "ActionPriceEffectiveDate", "ActionPriceExpirationDate", 
-            "SinglePiecesPerPackage", "PackagePiecesPerBox", 
-            "PackageNetContent", "PackageBasicPriceContent"
+            "BusinessUnitID", "ItemID", "MainPOSItemID", "BonText", "Description", 
+            "TaxGroupID", "MerchandiseHierarchyGroupID", "RegularSalesUnitPrice", 
+            "BaseUOMCode", "ClassCode", "TaxExemptCode", "ItemUsageTypeCode"
         ],
+        // Default Mapping (SAP -> GK XML Tags)
         defaultMap: {
-            "BusinessUnitId": "LOCNR", "ItemId": "MATNR", "GTIN": "EAN_List", "UomCode": "MEINH",
-            "Name": "MAKTX", "Description": "MAKTX", "MerchandiseHierarchyGroupId": "MATKL",
-            "Price": "SAP_Price", // Updated to map to mined price
-            "TaxGroupId": "CONST_1", "SinglePiecesPerPackage": "CONST_1",
-            "PackagePiecesPerBox": "CONST_1", "PackageNetContent": "CONST_1", "PackageBasicPriceContent": "CONST_1"
+            "BusinessUnitID": "LOCNR",
+            "ItemID": "MATNR",
+            "MainPOSItemID": "EAN_List", // Maps to GTIN/EAN
+            "BonText": "MAKTX",
+            "Description": "MAKTX",
+            "TaxGroupID": "CONST_A1",
+            "MerchandiseHierarchyGroupID": "MATKL",
+            "RegularSalesUnitPrice": "SAP_Price", // Mined Price
+            "BaseUOMCode": "MEINH",
+            "ClassCode": "CONST_HAWA",
+            "TaxExemptCode": "CONST_00",
+            "ItemUsageTypeCode": "CONST_00"
         }
     };
 
@@ -172,7 +179,7 @@
     }
 
     // ==========================================
-    // TAB 3: MASTER DATA LOGIC (PRICE MINING)
+    // TAB 3: MASTER DATA LOGIC
     // ==========================================
     async function loadMasterFiles(files) {
         if (!files.length) return;
@@ -190,19 +197,14 @@
                     let flat = {};
                     flattenJSON_Master(item, flat, "");
                     
-                    // --- CUSTOM LOGIC: PRICE MINING ---
-                    // Dig into UOM -> CONDITION -> CONDITION_VALUE -> KWERT
+                    // Price Mining
                     let price = "";
+                    let baseUOM = null;
                     if (item.UOM && Array.isArray(item.UOM)) {
-                        // 1. Pick Base UOM or First UOM
-                        let baseUOM = item.UOM.find(u => u.MEINH === 'EA' || u.MEINH === 'PCE') || item.UOM[0];
-                        
+                        baseUOM = item.UOM.find(u => u.MEINH === 'EA' || u.MEINH === 'PCE') || item.UOM[0];
                         if (baseUOM) {
-                            // Helper to extract EAN
                             flat['MEINH'] = baseUOM.MEINH || "";
                             flat['EAN_List'] = baseUOM.EAN11 || (baseUOM.EAN ? baseUOM.EAN[0]?.EAN11 : "") || "";
-
-                            // 2. Find Price Condition (VKP1)
                             if (baseUOM.CONDITION && Array.isArray(baseUOM.CONDITION)) {
                                 let cond = baseUOM.CONDITION.find(c => c.KSCHL === 'VKP1') || baseUOM.CONDITION[0];
                                 if (cond && cond.CONDITION_VALUE && cond.CONDITION_VALUE.length > 0) {
@@ -211,12 +213,10 @@
                             }
                         }
                     }
-                    flat['SAP_Price'] = price; // Store in custom key
-                    
-                    // --- END PRICE MINING ---
-
+                    flat['SAP_Price'] = price;
                     flat['MAKTX'] = item.MATTEXT?.find(t => t.SPRAS === 'E')?.MAKTX || item.MATTEXT?.[0]?.MAKTX || "";
                     if(flat['MATNR']) flat['MATNR'] = flat['MATNR'].replace(/^0+/, '');
+                    
                     MASTER.sapData.push(flat);
                 });
             } catch(e) { console.error(e); }
@@ -264,9 +264,65 @@
         });
         renderGKMasterHeader();
         document.getElementById('gkMasterBody').innerHTML = MASTER.gkData.slice(0, 50).map(r => `<tr>${MASTER.gkColumns.map(c => `<td class="${!r[c]?'empty-cell':''}">${r[c]||''}</td>`).join('')}</tr>`).join('');
-        document.getElementById('master-status').textContent = `${MASTER.gkData.length} rows ready`;
+        document.getElementById('master-status').textContent = `${MASTER.gkData.length} items ready`;
     }
 
+    // --- XML EXPORT LOGIC ---
+    function exportMasterXML() {
+        if(MASTER.gkData.length === 0) return alert("No data");
+        
+        let xml = `<?xml version="1.0" encoding="UTF-8"?>\n`;
+        xml += `<ItemList xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" NumberOfItems="${MASTER.gkData.length}">\n`;
+        
+        MASTER.gkData.forEach(row => {
+            xml += `\t<Item ChangeType="DIRECT">\n`;
+            
+            // Construct Hierarchical XML from Flat Map
+            if(row.BusinessUnitID) {
+                xml += `\t\t<BusinessUnitAssignment>\n`;
+                xml += `\t\t\t<BusinessUnitID>${row.BusinessUnitID}</BusinessUnitID>\n`;
+                xml += `\t\t</BusinessUnitAssignment>\n`;
+            }
+            if(row.ItemID) xml += `\t\t<ItemID>${row.ItemID}</ItemID>\n`;
+            if(row.MainPOSItemID) xml += `\t\t<MainPOSItemID>${row.MainPOSItemID}</MainPOSItemID>\n`; // EAN
+            if(row.BonText) xml += `\t\t<BonText>${escapeXml(row.BonText)}</BonText>\n`;
+            if(row.Description) xml += `\t\t<Description>${escapeXml(row.Description)}</Description>\n`;
+            if(row.TaxGroupID) xml += `\t\t<TaxGroupID>${row.TaxGroupID}</TaxGroupID>\n`;
+            if(row.BaseUOMCode) xml += `\t\t<BaseUOMCode>${row.BaseUOMCode}</BaseUOMCode>\n`;
+            if(row.ClassCode) xml += `\t\t<ClassCode>${row.ClassCode}</ClassCode>\n`;
+            if(row.TaxExemptCode) xml += `\t\t<TaxExemptCode>${row.TaxExemptCode}</TaxExemptCode>\n`;
+            if(row.ItemUsageTypeCode) xml += `\t\t<ItemUsageTypeCode>${row.ItemUsageTypeCode}</ItemUsageTypeCode>\n`;
+            
+            if(row.MerchandiseHierarchyGroupID) {
+                xml += `\t\t<MerchandiseHierarchyGroupAssignment>\n`;
+                xml += `\t\t\t<MerchandiseHierarchyGroupID>${row.MerchandiseHierarchyGroupID}</MerchandiseHierarchyGroupID>\n`;
+                xml += `\t\t</MerchandiseHierarchyGroupAssignment>\n`;
+            }
+            
+            if(row.RegularSalesUnitPrice && row.RegularSalesUnitPrice !== "0") {
+                xml += `\t\t<RegularSalesUnitPrice>${row.RegularSalesUnitPrice}</RegularSalesUnitPrice>\n`;
+            }
+            
+            xml += `\t</Item>\n`;
+        });
+        
+        xml += `</ItemList>`;
+        downloadFile(xml, "ItemMasterData_Import.xml", "text/xml");
+    }
+
+    function escapeXml(unsafe) {
+        return unsafe.replace(/[<>&'"]/g, function (c) {
+            switch (c) {
+                case '<': return '&lt;';
+                case '>': return '&gt;';
+                case '&': return '&amp;';
+                case '\'': return '&apos;';
+                case '"': return '&quot;';
+            }
+        });
+    }
+
+    // Drag & Drop
     function dragStart(e, k) { e.dataTransfer.setData("text", k); }
     function allowDrop(e) { e.preventDefault(); e.currentTarget.classList.add('drag-over'); }
     function drop(e, col) {
@@ -276,15 +332,8 @@
     }
     function resetMasterMapping() { MASTER.currentMap = {...MASTER.defaultMap}; applyMasterMapping(); }
 
-    function exportMasterCSV() {
-        if(MASTER.gkData.length===0) return alert("No data");
-        let csv = MASTER.gkColumns.join(";") + "\n";
-        MASTER.gkData.forEach(r => csv += MASTER.gkColumns.map(c => r[c]||"").join(";") + "\n");
-        downloadFile(csv, "GK_Import.csv", "text/csv");
-    }
-
     // ==========================================
-    // TAB 1 & 2: PROMOTION (UNCHANGED)
+    // TAB 1 & 2 LOGIC (Unchanged)
     // ==========================================
     async function loadPromoFiles(files, type) {
         if (!files.length) return;
@@ -324,7 +373,7 @@
         PROMO[type].columns = Array.from(orderedKeys);
         renderPromoTable(type); updateBI();
     }
-
+    
     function flattenDocOrder(node, res, prefix) {
         if (node.children.length === 0) {
             let val = node.textContent.trim();
