@@ -2,7 +2,7 @@
 <html lang="th">
 <head>
     <meta charset="UTF-8">
-    <title>GK Analyzer v19 - Seamless Integration</title>
+    <title>GK Analyzer v20 - Body Structure Order</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <style>
         :root { --primary: #217346; --accent: #107c41; --sap: #e67e22; --bg: #f3f2f1; --border: #e1dfdd; }
@@ -50,7 +50,7 @@
 <body>
 
 <header>
-    <div class="app-title">📊 GK Analyzer v19 - Seamless Integration (Comma)</div>
+    <div class="app-title">📊 GK Analyzer v20 - Body Order (Strict)</div>
     <button class="global-btn" onclick="exportExcel()">⬇ Export Excel</button>
 </header>
 
@@ -92,16 +92,18 @@
     async function loadFiles(files, type) {
         if (!files.length) return;
         APP[type].data = [];
-        let allKeys = new Set();
+        
+        // Use Set to maintain Insertion Order (Document Order)
+        let orderedKeys = new Set(); 
 
         for (let file of Array.from(files)) {
             const text = await file.text();
-            let row = { "FileName": file.name };
+            let row = { "FileName": file.name }; // FileName is always first by logic below, but we handle it specifically
 
             if (type === 'xml') {
                 if (!file.name.toLowerCase().endsWith('.xml')) continue;
                 const xml = new DOMParser().parseFromString(text, "text/xml");
-                flattenXML_ExcelStyle(xml.documentElement, row);
+                flattenXML_DocOrder(xml.documentElement, row);
                 APP[type].data.push(row);
             } else {
                 if (!file.name.toLowerCase().endsWith('.json')) continue;
@@ -113,62 +115,58 @@
                     
                     items.forEach(item => {
                         let subRow = { "FileName": file.name };
-                        flattenJSON_Deep(item, subRow, "");
+                        flattenJSON_DocOrder(item, subRow, "");
                         APP[type].data.push(subRow);
                     });
                 } catch(e) { console.error(e); }
             }
         }
 
-        // Collect Keys & Prioritize
-        APP[type].data.forEach(r => Object.keys(r).forEach(k => allKeys.add(k)));
-        
-        let priority = [];
-        if(type === 'xml') {
-             priority = ["FileName", "PromotionID", "BusinessUnitID", "GK_Promo_ID", "Description", "PriceModificationAmount", "NewPriceAmount"];
-        } else {
-             priority = [
-                 "FileName", "RetailIncentive.RetailEventID", "RetailIncentive.Description.0.Description.0.$", 
-                 "RetailIncentive.Offer.Get.ProductGroup.PriceAmount.$", 
-                 "RetailIncentive.Offer.Get.ProductGroup.DiscountPercent",
-                 "RetailIncentive.Offer.Get.ProductGroup.DiscountAmount.$"
-             ];
-        }
+        // Extract Columns in Order of Appearance
+        // We iterate through all rows to ensure we capture keys from all files
+        // Set will prevent duplicates but keep the order of first insertion
+        APP[type].data.forEach(r => {
+            Object.keys(r).forEach(k => {
+                if(k !== "FileName") orderedKeys.add(k);
+            });
+        });
 
-        let sortedKeys = Array.from(allKeys).sort();
-        APP[type].columns = [...priority.filter(k => allKeys.has(k)), ...sortedKeys.filter(k => !priority.includes(k))];
+        // Force FileName to be first, then the rest in Document Order
+        APP[type].columns = ["FileName", ...Array.from(orderedKeys)];
 
         renderTable(type);
         document.getElementById(`${type}-status`).textContent = `${APP[type].data.length} records`;
     }
 
-    // --- XML FLATTENER (Comma) ---
-    function flattenXML_ExcelStyle(node, res, prefix = "") {
+    // --- XML FLATTENER (Document Order) ---
+    function flattenXML_DocOrder(node, res, prefix = "") {
         if (node.children.length === 0) {
             let val = node.textContent.trim();
             if (val) {
                 let key = node.nodeName;
+                // Excel-style naming logic
                 const simpleKeys = ["PromotionID", "Description", "BusinessUnitID", "PriceModificationAmount", "PriceModificationPercent", "NewPriceAmount"];
                 if (!simpleKeys.includes(key) && (prefix.includes("Rule") || prefix.includes("Eligibility"))) {
                     let parent = prefix.split('_').filter(p=>p).pop(); 
                     if(parent) key = parent + "_" + key;
                 }
-                // Use COMMA
                 res[key] = res[key] ? res[key] + "," + val : val;
             }
         } else {
+            // Iterating children array preserves Document Order
             Array.from(node.children).forEach(child => {
                 let newPrefix = prefix;
                 if(["PromotionConditionRule", "PromotionConditionEligibility", "RebatePromotionConditionRule"].includes(child.nodeName)) {
                      newPrefix += child.nodeName + "_";
                 }
-                flattenXML_ExcelStyle(child, res, newPrefix);
+                flattenXML_DocOrder(child, res, newPrefix);
             });
         }
     }
 
-    // --- JSON DEEP FLATTENER (Comma) ---
-    function flattenJSON_Deep(obj, res, prefix) {
+    // --- JSON FLATTENER (Document Order) ---
+    function flattenJSON_DocOrder(obj, res, prefix) {
+        // for..in loops in modern JS generally preserve string key insertion order (except for integers)
         for (let k in obj) {
             let v = obj[k];
             let newKey = prefix ? (k === "$" ? prefix + ".$" : prefix + "." + k) : k;
@@ -177,26 +175,27 @@
 
             if (Array.isArray(v)) {
                 if (v.length > 0 && typeof v[0] === 'object') {
-                    // ARRAY OF OBJECTS: Deep dive and aggregate
+                    // Extract keys from the first object to maintain sub-structure order
                     let subKeys = new Set();
-                    v.forEach(item => flattenKeys(item, "", subKeys));
+                    v.forEach(item => {
+                        // We must traverse item to find its keys in order
+                        flattenKeysOrder(item, "", subKeys);
+                    });
                     
                     subKeys.forEach(sk => {
                         let fullSubKey = newKey + (sk.startsWith(".") ? "" : ".") + sk;
-                        
                         let values = v.map(item => {
                             let val = getDeepValue(item, sk);
                             return val !== undefined ? val : "";
-                        }).filter(val => val !== "").join(","); // <--- CHANGE TO COMMA HERE
-                        
+                        }).filter(val => val !== "").join(","); 
                         if(values !== "") res[fullSubKey] = values;
                     });
                 } else {
-                    res[newKey] = v.join(","); // <--- CHANGE TO COMMA HERE
+                    res[newKey] = v.join(",");
                 }
             } 
             else if (typeof v === 'object') {
-                flattenJSON_Deep(v, res, newKey);
+                flattenJSON_DocOrder(v, res, newKey);
             } 
             else {
                 res[newKey] = v;
@@ -204,11 +203,12 @@
         }
     }
 
-    function flattenKeys(obj, prefix, set) {
+    // Helper to collect keys in order
+    function flattenKeysOrder(obj, prefix, set) {
         for(let k in obj) {
             let p = prefix ? (k==="$" ? prefix+".$" : prefix+"."+k) : k;
             if(typeof obj[k] === 'object' && obj[k] !== null && !Array.isArray(obj[k])) {
-                flattenKeys(obj[k], p, set);
+                flattenKeysOrder(obj[k], p, set);
             } else {
                 set.add(p);
             }
@@ -237,11 +237,11 @@
             </th>`).join('')}</tr>`;
             
         tbody.innerHTML = APP[type].data.map(r => `<tr>${cols.map(k => `<td title="${r[k]||''}">${r[k]||''}</td>`).join('')}</tr>`).join('');
-        
         attachHeaderEvents(type);
     }
 
     function formatHeader(k) {
+        // Clean prefixes for display only, maintain full path for sorting/key
         return k.replace('RetailIncentiveERPStoreOfferReplicationBulkRequest_V1.', '')
                 .replace('RetailIncentive.', '')
                 .replace('Offer.Get.', 'Get.')
@@ -250,6 +250,7 @@
                 .replace('.$', ' ($)');
     }
 
+    // --- UTILS (Resize, Sort, Export) ---
     function initResize(e) {
         e.preventDefault(); e.stopPropagation();
         const th = e.target.parentElement;
@@ -307,7 +308,7 @@
         const wb = XLSX.utils.book_new();
         if(APP.xml.data.length) XLSX.utils.book_append_sheet(wb, XLSX.utils.table_to_book(document.getElementById('xmlTable')), "GK_XML");
         if(APP.json.data.length) XLSX.utils.book_append_sheet(wb, XLSX.utils.table_to_book(document.getElementById('jsonTable')), "SAP_JSON");
-        XLSX.writeFile(wb, "GK_Analysis_v19.xlsx");
+        XLSX.writeFile(wb, "GK_SAP_Ordered_Flat.xlsx");
     }
 </script>
 </body>
