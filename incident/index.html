@@ -3,110 +3,246 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>แจ้งปัญหาเทคนิค - Helpdesk Portal</title>
+    <title>ServiceNow Simplified Portal</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;600;700&display=swap');
+        body { font-family: 'Sarabun', sans-serif; }
+        .tab-active { border-bottom: 4px solid #2563eb; color: #2563eb; }
+    </style>
 </head>
-<body class="bg-gray-100 min-h-screen flex items-center justify-center p-4">
+<body class="bg-gray-100 min-h-screen">
 
-    <div class="bg-white p-8 rounded-xl shadow-lg w-full max-w-lg">
-        <h2 class="text-2xl font-bold mb-6 text-gray-800 border-b pb-2">📦 เปิด Ticket แจ้งปัญหา</h2>
-        
-        <form id="incidentForm" class="space-y-4">
-            <div>
-                <label class="block text-sm font-semibold text-gray-700">สาขาที่แจ้ง (Caller)</label>
-                <select id="caller" class="w-full mt-1 p-2 border rounded-md focus:ring-2 focus:ring-blue-500 outline-none" required>
-                    <option value="">-- เลือกสาขา --</option>
-                    <option>MALL-0006 The Mall Ngamwongwan</option>
-                    <option>MALL-0007 The Mall Bangkae</option>
-                    <option>MALL-0009 Emporium</option>
-                    <option>MALL-0011 Siam Paragon</option>
-                    <option>MALL-0012 EmQuartier</option>
-                    <option>MALL-0015 Emsphere</option>
-                    <option>MALL-S001 Terminal 21</option>
-                    <option>MALL-0000 The Mall Group (HeadOffice)</option>
-                    <option>MALL-0002 The Mall Ramkhamhaeng</option>
-                    <option>MALL-0005 The Mall Tha phra</option>
-                    <option>MALL-0008 The Mall Bangkapi</option>
-                    <option>MALL-0010 The Mall Korat</option>
-                    <option>MALL-S002 Promenade</option>
-                    <option>MALL-S003 AOT</option>
-                    <option>MALL-S004 CDC Ratchapruek</option>
-                    <option>MALL-S005 MRT Lat Prao</option>
-                    <option>MALL-S010 Design Village Phuthamonton</option>
-                    <option>MALL-S014 Design Village Bangna</option>
-                </select>
-            </div>
-
-            <div>
-                <label class="block text-sm font-semibold text-gray-700">ประเภทอุปกรณ์ (Category)</label>
-                <select id="category" class="w-full mt-1 p-2 border rounded-md focus:ring-2 focus:ring-blue-500 outline-none" required>
-                    <option value="Hardware">Hardware</option>
-                    <option value="Software">Software</option>
-                </select>
-            </div>
-
-            <div>
-                <label class="block text-sm font-semibold text-gray-700">หัวข้อปัญหา (Short Description)</label>
-                <input type="text" id="short_description" placeholder="เช่น พิมพ์ใบเสร็จไม่ออก" class="w-full mt-1 p-2 border rounded-md focus:ring-2 focus:ring-blue-500 outline-none" required>
-            </div>
-
-            <div>
-                <label class="block text-sm font-semibold text-gray-700">รายละเอียด (Description)</label>
-                <textarea id="description" rows="3" placeholder="ระบุรายละเอียดเพิ่มเติม..." class="w-full mt-1 p-2 border rounded-md focus:ring-2 focus:ring-blue-500 outline-none"></textarea>
-            </div>
-
-            <div>
-                <label class="block text-sm font-semibold text-gray-700">ชื่อ-เบอร์โทรผู้แจ้ง (Contact Info)</label>
-                <input type="text" id="contact" placeholder="ชื่อ คุณ... โทร 08x-xxxxxxx" class="w-full mt-1 p-2 border rounded-md focus:ring-2 focus:ring-blue-500 outline-none" required>
-            </div>
-
-            <button type="submit" class="w-full bg-blue-600 text-white font-bold py-3 rounded-md hover:bg-blue-700 transition duration-300">
-                ส่งข้อมูล (Submit Ticket)
+    <nav class="bg-white shadow-sm mb-6">
+        <div class="max-w-7xl mx-auto flex">
+            <button onclick="switchTab('user-form')" id="tab-user" class="px-6 py-4 font-bold tab-active transition">
+                <i class="fas fa-edit mr-2"></i>หน้าแจ้งปัญหา (User)
             </button>
-        </form>
+            <button onclick="switchTab('admin-dashboard')" id="tab-admin" class="px-6 py-4 font-bold text-gray-500 hover:text-blue-600 transition">
+                <i class="fas fa-list-check mr-2"></i>Dashboard (Admin)
+            </button>
+        </div>
+    </nav>
+
+    <div class="max-w-7xl mx-auto px-4 pb-12">
+        
+        <div id="user-form" class="block">
+            <div class="bg-white p-8 rounded-xl shadow-lg max-w-2xl mx-auto">
+                <div class="flex items-center gap-4 mb-6 border-b pb-4">
+                    <img src="https://www.fujitsu.com/global/images/navigation/logo.png" alt="Fujitsu" class="h-6">
+                    <h2 class="text-2xl font-bold text-gray-800">เปิด Ticket แจ้งปัญหา</h2>
+                </div>
+                
+                <form id="incidentForm" class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700">สาขาที่แจ้ง (Caller)</label>
+                        <select id="caller" class="w-full mt-1 p-2.5 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" required>
+                            <option value="">-- เลือกสาขา --</option>
+                            <option>MALL-0006 The Mall Ngamwongwan</option>
+                            <option>MALL-0007 The Mall Bangkae</option>
+                            <option>MALL-0009 Emporium</option>
+                            <option>MALL-0011 Siam Paragon</option>
+                            <option>MALL-0012 EmQuartier</option>
+                            <option>MALL-0015 Emsphere</option>
+                            <option>MALL-S001 Terminal 21</option>
+                            <option>MALL-0000 The Mall Group (HeadOffice)</option>
+                            <option>MALL-0002 The Mall Ramkhamhaeng</option>
+                            <option>MALL-0005 The Mall Tha phra</option>
+                            <option>MALL-0008 The Mall Bangpapi</option>
+                            <option>MALL-0010 The Mall Korat</option>
+                            <option>MALL-S002 Promenade</option>
+                            <option>MALL-S003 AOT</option>
+                            <option>MALL-S004 CDC Ratchapruek</option>
+                            <option>MALL-S005 MRT Lat Prao</option>
+                            <option>MALL-S010 Design Village Phuthamonton</option>
+                            <option>MALL-S014 Design Village Bangna</option>
+                        </select>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-semibold text-gray-700">ประเภท (Category)</label>
+                            <select id="category" class="w-full mt-1 p-2.5 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none">
+                                <option value="Hardware">Hardware</option>
+                                <option value="Software">Software</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-semibold text-gray-700">ชื่อ-เบอร์โทร (Contact)</label>
+                            <input type="text" id="contact" placeholder="คุณ... 08x-xxx" class="w-full mt-1 p-2.5 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" required>
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700">หัวข้อปัญหา (Short Description)</label>
+                        <input type="text" id="short_description" class="w-full mt-1 p-2.5 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" required>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700">รายละเอียดเพิ่มเติม (Description)</label>
+                        <textarea id="description" rows="3" class="w-full mt-1 p-2.5 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"></textarea>
+                    </div>
+
+                    <button type="submit" id="btnSubmit" class="w-full bg-blue-600 text-white font-bold py-3 rounded-lg hover:bg-blue-700 transition flex justify-center items-center">
+                        <i class="fas fa-paper-plane mr-2"></i> ส่งข้อมูลเข้าสู่ระบบ
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <div id="admin-dashboard" class="hidden">
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+                <div class="bg-white p-4 rounded-xl shadow-sm border-l-4 border-blue-500">
+                    <p class="text-xs text-gray-500 font-bold uppercase">Total Tickets</p>
+                    <h2 id="total-count" class="text-2xl font-bold">0</h2>
+                </div>
+                <div class="bg-white p-4 rounded-xl shadow-sm border-l-4 border-amber-500">
+                    <p class="text-xs text-gray-500 font-bold uppercase">Pending (รอรับงาน)</p>
+                    <h2 id="pending-count" class="text-2xl font-bold">0</h2>
+                </div>
+                <div class="bg-white p-4 rounded-xl shadow-sm border-l-4 border-green-500">
+                    <p class="text-xs text-gray-500 font-bold uppercase">Integrated (ดึงแล้ว)</p>
+                    <h2 id="pulled-count" class="text-2xl font-bold">0</h2>
+                </div>
+                <div class="bg-white p-4 rounded-xl shadow-sm border-l-4 border-purple-500">
+                    <p class="text-xs text-gray-500 font-bold uppercase">Role</p>
+                    <p class="text-sm font-semibold">Manager / PM</p>
+                </div>
+            </div>
+
+            <div class="bg-white shadow-xl rounded-xl overflow-hidden border border-gray-200">
+                <div class="overflow-x-auto">
+                    <table class="min-w-full text-left border-collapse">
+                        <thead class="bg-gray-800 text-white text-xs uppercase font-bold">
+                            <tr>
+                                <th class="px-6 py-4">เวลาแจ้ง</th>
+                                <th class="px-6 py-4">สาขา (Caller)</th>
+                                <th class="px-6 py-4">ประเภท</th>
+                                <th class="px-6 py-4">หัวข้อ</th>
+                                <th class="px-6 py-4">เบอร์ติดต่อ</th>
+                                <th class="px-6 py-4 text-center">Integration Flag</th>
+                            </tr>
+                        </thead>
+                        <tbody id="ticket-list" class="text-sm divide-y divide-gray-100">
+                            </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
     </div>
 
     <script type="module">
-        // ขั้นตอนนี้จะสมบูรณ์เมื่อเราตั้งค่า Firebase เสร็จ
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-        import { getFirestore, collection, addDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+        import { getFirestore, collection, addDoc, query, orderBy, onSnapshot } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-        // --- รอใส่ Firebase Config ตรงนี้ ---
-const firebaseConfig = {
-  apiKey: "AIzaSyCKhox_fzBzuU9n6Q4hv2fHSiXVUw7_I1U",
-  authDomain: "service-now-79151.firebaseapp.com",
-  projectId: "service-now-79151",
-  storageBucket: "service-now-79151.firebasestorage.app",
-  messagingSenderId: "437301948553",
-  appId: "1:437301948553:web:3f383db66adf1fababd658",
-  measurementId: "G-425DNYYS2S"
-};
+        const firebaseConfig = {
+            apiKey: "AIzaSyCKhox_fzBzuU9n6Q4hv2fHSiXVUw7_I1U",
+            authDomain: "service-now-79151.firebaseapp.com",
+            projectId: "service-now-79151",
+            storageBucket: "service-now-79151.firebasestorage.app",
+            messagingSenderId: "437301948553",
+            appId: "1:437301948553:web:3f383db66adf1fababd658"
+        };
 
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
 
-        // จัดการการส่ง Form
+        // --- 1. FUNCTION: SAVE TICKET ---
         document.getElementById('incidentForm').addEventListener('submit', async (e) => {
             e.preventDefault();
-            
-            const ticketData = {
-                caller: document.getElementById('caller').value,
-                category: document.getElementById('category').value,
-                short_description: document.getElementById('short_description').value,
-                description: document.getElementById('description').value,
-                contact_info: document.getElementById('contact').value,
-                timestamp: new Date()
-            };
+            const btn = document.getElementById('btnSubmit');
+            btn.disabled = true;
+            btn.innerText = "กำลังส่งข้อมูล...";
 
             try {
-                await addDoc(collection(db, "incidents"), ticketData);
-                alert("ส่งข้อมูลสำเร็จ! ข้อมูลถูกบันทึกเข้าระบบแล้ว");
+                await addDoc(collection(db, "incidents"), {
+                    caller: document.getElementById('caller').value,
+                    category: document.getElementById('category').value,
+                    short_description: document.getElementById('short_description').value,
+                    description: document.getElementById('description').value,
+                    contact_info: document.getElementById('contact').value,
+                    is_pulled: false, // Default flag
+                    status: "Pending",
+                    timestamp: new Date()
+                });
+                alert("ส่ง Ticket สำเร็จ!");
                 document.getElementById('incidentForm').reset();
-            } catch (error) {
-                console.error("Error adding document: ", error);
-                alert("เกิดข้อผิดพลาด กรุณาลองใหม่");
+            } catch (err) {
+                console.error(err);
+                alert("เกิดข้อผิดพลาด");
+            } finally {
+                btn.disabled = false;
+                btn.innerText = "ส่งข้อมูลเข้าสู่ระบบ";
             }
         });
+
+        // --- 2. FUNCTION: REAL-TIME DASHBOARD ---
+        const q = query(collection(db, "incidents"), orderBy("timestamp", "desc"));
+        onSnapshot(q, (snapshot) => {
+            const tbody = document.getElementById('ticket-list');
+            const totalH = document.getElementById('total-count');
+            const pendingH = document.getElementById('pending-count');
+            const pulledH = document.getElementById('pulled-count');
+
+            tbody.innerHTML = "";
+            let counts = { all: 0, pending: 0, pulled: 0 };
+
+            snapshot.forEach((doc) => {
+                const data = doc.data();
+                const isPulled = data.is_pulled || false;
+                
+                counts.all++;
+                isPulled ? counts.pulled++ : counts.pending++;
+
+                tbody.innerHTML += `
+                    <tr class="hover:bg-gray-50 transition ${isPulled ? 'bg-green-50/30' : ''}">
+                        <td class="px-6 py-4 text-gray-500">${data.timestamp?.toDate().toLocaleString('th-TH')}</td>
+                        <td class="px-6 py-4 font-bold text-gray-800">${data.caller}</td>
+                        <td class="px-6 py-4">
+                            <span class="px-2 py-1 rounded text-[10px] font-bold ${data.category === 'Hardware' ? 'bg-purple-100 text-purple-600' : 'bg-blue-100 text-blue-600'}">
+                                ${data.category}
+                            </span>
+                        </td>
+                        <td class="px-6 py-4">${data.short_description}</td>
+                        <td class="px-6 py-4 text-blue-600">${data.contact_info}</td>
+                        <td class="px-6 py-4 text-center">
+                            <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold ${isPulled ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-700 animate-pulse'}">
+                                <i class="fas ${isPulled ? 'fa-check-circle' : 'fa-clock'} mr-2"></i>
+                                ${isPulled ? 'INTEGRATED' : 'WAITING'}
+                            </span>
+                        </td>
+                    </tr>
+                `;
+            });
+
+            totalH.innerText = counts.all;
+            pendingH.innerText = counts.pending;
+            pulledH.innerText = counts.pulled;
+        });
+    </script>
+
+    <script>
+        // TAB SWITCHER
+        function switchTab(tabName) {
+            document.getElementById('user-form').classList.add('hidden');
+            document.getElementById('admin-dashboard').classList.add('hidden');
+            document.getElementById(tabName).classList.remove('hidden');
+
+            document.getElementById('tab-user').classList.remove('tab-active');
+            document.getElementById('tab-admin').classList.remove('tab-active');
+            document.getElementById('tab-user').classList.add('text-gray-500');
+            document.getElementById('tab-admin').classList.add('text-gray-500');
+
+            if(tabName === 'user-form') {
+                document.getElementById('tab-user').classList.add('tab-active');
+                document.getElementById('tab-user').classList.remove('text-gray-500');
+            } else {
+                document.getElementById('tab-admin').classList.add('tab-active');
+                document.getElementById('tab-admin').classList.remove('text-gray-500');
+            }
+        }
     </script>
 </body>
 </html>
