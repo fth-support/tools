@@ -72,14 +72,15 @@
         import { getFirestore, collection, addDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
         // --- รอใส่ Firebase Config ตรงนี้ ---
-        const firebaseConfig = {
-            apiKey: "YOUR_API_KEY",
-            authDomain: "YOUR_PROJECT.firebaseapp.com",
-            projectId: "YOUR_PROJECT_ID",
-            storageBucket: "YOUR_PROJECT.appspot.com",
-            messagingSenderId: "YOUR_ID",
-            appId: "YOUR_APP_ID"
-        };
+const firebaseConfig = {
+  apiKey: "AIzaSyCKhox_fzBzuU9n6Q4hv2fHSiXVUw7_I1U",
+  authDomain: "service-now-79151.firebaseapp.com",
+  projectId: "service-now-79151",
+  storageBucket: "service-now-79151.firebasestorage.app",
+  messagingSenderId: "437301948553",
+  appId: "1:437301948553:web:3f383db66adf1fababd658",
+  measurementId: "G-425DNYYS2S"
+};
 
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
