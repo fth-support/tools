@@ -16,32 +16,48 @@
 </head>
 <body class="bg-gray-50 min-h-screen">
 
-    <nav class="bg-white shadow-sm sticky top-0 z-50">
+    <nav id="main-nav" class="bg-white shadow-sm sticky top-0 z-50 hidden">
         <div class="max-w-7xl mx-auto flex px-4">
-            <button onclick="switchTab('user-section')" id="tab-user" class="px-6 py-4 font-bold tab-active transition flex items-center gap-2">
-                <i class="fas fa-ticket-alt"></i> แจ้งปัญหา (User)
-            </button>
-            <button onclick="switchTab('admin-section')" id="tab-admin" class="px-6 py-4 font-bold text-gray-500 hover:text-blue-600 transition flex items-center gap-2">
-                <i class="fas fa-tools"></i> Dashboard (Admin)
-            </button>
+            <button onclick="showMenu()" class="px-4 py-4 text-gray-500 hover:text-blue-600"><i class="fas fa-home"></i></button>
+            <div id="nav-links" class="flex">
+                </div>
         </div>
     </nav>
 
     <div class="max-w-7xl mx-auto px-4 py-8">
         
-        <div id="user-section">
-            <div id="form-container" class="bg-white p-8 rounded-2xl shadow-lg max-w-2xl mx-auto border">
-                <div class="flex items-center gap-3 mb-8 border-b pb-6">
-                    <div class="bg-blue-600 p-2 rounded-lg text-white">
-                        <i class="fas fa-headset text-2xl"></i>
-                    </div>
-                    <h2 class="text-2xl font-bold text-gray-800 tracking-tight">FTH Support Portal</h2>
+        <div id="main-menu" class="max-w-2xl mx-auto py-12 text-center">
+            <div class="mb-10">
+                <div class="bg-blue-600 w-20 h-20 rounded-2xl text-white flex items-center justify-center mx-auto mb-4 shadow-lg">
+                    <i class="fas fa-headset text-4xl"></i>
                 </div>
-                
+                <h1 class="text-3xl font-bold text-gray-800">FTH Support Portal</h1>
+                <p class="text-gray-500 mt-2">กรุณาเลือกบริการที่ต้องการ</p>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <button onclick="switchPage('user-form')" class="bg-white p-8 rounded-2xl shadow-md border-2 border-transparent hover:border-blue-500 transition-all group">
+                    <i class="fas fa-edit text-4xl text-blue-600 mb-4 group-hover:scale-110 transition"></i>
+                    <h3 class="text-xl font-bold text-gray-800">แจ้งปัญหาใหม่</h3>
+                    <p class="text-sm text-gray-400 mt-2">เปิด Ticket สำหรับแจ้งซ่อมอุปกรณ์หรือโปรแกรม</p>
+                </button>
+                <button onclick="switchPage('track-status')" class="bg-white p-8 rounded-2xl shadow-md border-2 border-transparent hover:border-orange-500 transition-all group">
+                    <i class="fas fa-search-location text-4xl text-orange-500 mb-4 group-hover:scale-110 transition"></i>
+                    <h3 class="text-xl font-bold text-gray-800">ติดตามสถานะ</h3>
+                    <p class="text-sm text-gray-400 mt-2">ตรวจสอบความคืบหน้าด้วยหมายเลข Ticket</p>
+                </button>
+            </div>
+            <button onclick="switchPage('admin-dashboard')" class="mt-12 text-gray-300 hover:text-gray-500 text-sm italic transition">
+                <i class="fas fa-lock mr-1"></i> สำหรับเจ้าหน้าที่ (Admin)
+            </button>
+        </div>
+
+        <div id="user-form" class="hidden">
+            <div id="form-container" class="bg-white p-8 rounded-2xl shadow-lg max-w-2xl mx-auto border">
+                <h2 class="text-2xl font-bold text-gray-800 mb-6 border-b pb-4">📝 ข้อมูลการแจ้งปัญหา</h2>
                 <form id="incidentForm" class="space-y-5">
                     <div>
                         <label class="block text-sm font-bold text-gray-700 mb-1">สาขาที่แจ้ง (Caller) *</label>
-                        <select id="caller" class="w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" required>
+                        <select id="caller" class="w-full p-3 border rounded-lg outline-none focus:ring-2 focus:ring-blue-500" required>
                             <option value="">-- กรุณาเลือกสาขา --</option>
                             <option>MALL-0006 The Mall Ngamwongwan</option>
                             <option>MALL-0007 The Mall Bangkae</option>
@@ -55,105 +71,93 @@
                             <option>MALL-0005 The Mall Tha phra</option>
                             <option>MALL-0008 The Mall Bangpapi</option>
                             <option>MALL-0010 The Mall Korat</option>
-                            <option>MALL-S002 Promenade</option>
-                            <option>MALL-S003 AOT</option>
-                            <option>MALL-S004 CDC Ratchapruek</option>
-                            <option>MALL-S005 MRT Lat Prao</option>
-                            <option>MALL-S010 Design Village Phuthamonton</option>
-                            <option>MALL-S014 Design Village Bangna</option>
                         </select>
                     </div>
-
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
                         <div>
                             <label class="block text-sm font-bold text-gray-700 mb-1">ประเภท (Category)</label>
-                            <select id="category" class="w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none">
-                                <option value="Hardware">Hardware</option>
-                                <option value="Software">Software</option>
-                            </select>
+                            <select id="category" class="w-full p-3 border rounded-lg outline-none"><option>Hardware</option><option>Software</option></select>
                         </div>
                         <div>
                             <label class="block text-sm font-bold text-gray-700 mb-1">ชื่อ-เบอร์โทรผู้แจ้ง *</label>
-                            <input type="text" id="contact" placeholder="ระบุชื่อและเบอร์โทร" class="w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" required>
+                            <input type="text" id="contact" class="w-full p-3 border rounded-lg outline-none focus:ring-2 focus:ring-blue-500" required>
                         </div>
                     </div>
-
                     <div>
-                        <label class="block text-sm font-bold text-gray-700 mb-1">หัวข้อปัญหา (Short Description) *</label>
-                        <input type="text" id="short_description" class="w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" required>
+                        <label class="block text-sm font-bold text-gray-700 mb-1">หัวข้อปัญหา *</label>
+                        <input type="text" id="short_description" class="w-full p-3 border rounded-lg outline-none" required>
                     </div>
-
-                    <div>
-                        <label class="block text-sm font-bold text-gray-700 mb-1">รายละเอียดเพิ่มเติม</label>
-                        <textarea id="description" rows="2" class="w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"></textarea>
-                    </div>
-
                     <div>
                         <label class="block text-sm font-bold text-gray-700 mb-1">แนบรูปภาพ (สูงสุด 3 รูป)</label>
-                        <input type="file" id="imageInput" accept="image/*" multiple class="text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100">
+                        <input type="file" id="imageInput" accept="image/*" multiple class="text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:bg-blue-50 file:text-blue-700">
                     </div>
-
-                    <button type="submit" id="btnSubmit" class="w-full bg-blue-600 text-white font-bold py-4 rounded-lg hover:bg-blue-700 transition flex justify-center items-center gap-2">
-                        <i class="fas fa-paper-plane"></i> ส่งแจ้งปัญหา
+                    <button type="submit" id="btnSubmit" class="w-full bg-blue-600 text-white font-bold py-4 rounded-lg hover:bg-blue-700 shadow-lg flex justify-center items-center gap-2 transition">
+                        <i class="fas fa-paper-plane"></i> ยืนยันการส่งข้อมูล
                     </button>
                 </form>
             </div>
-
             <div id="success-container" class="hidden bg-white p-12 rounded-2xl shadow-lg max-w-md mx-auto text-center border">
                 <div class="text-green-500 text-6xl mb-4"><i class="fas fa-check-circle"></i></div>
-                <h2 class="text-2xl font-bold text-gray-800 mb-2">ได้รับแจ้งปัญหาแล้ว!</h2>
-                <p class="text-gray-500 mb-6">จดหมายเลข Ticket ไว้เพื่อติดตามสถานะครับ</p>
-                <div class="bg-blue-50 p-4 rounded-xl mb-8 border border-blue-100">
-                    <span class="text-gray-500 text-xs uppercase font-bold block mb-1">Ticket Number</span>
-                    <span id="display-ticket-id" class="text-3xl font-black text-blue-700 font-mono tracking-tighter"></span>
-                </div>
-                <button onclick="location.reload()" class="w-full py-3 bg-gray-100 rounded-lg font-bold text-gray-600 hover:bg-gray-200 transition">กลับหน้าหลัก</button>
+                <h2 class="text-2xl font-bold text-gray-800 mb-2">ส่งแจ้งสำเร็จ!</h2>
+                <div class="bg-blue-50 p-4 rounded-xl mb-8"><span id="display-ticket-id" class="text-3xl font-black text-blue-700 font-mono"></span></div>
+                <button onclick="showMenu()" class="w-full py-3 bg-gray-100 rounded-lg font-bold text-gray-600 hover:bg-gray-200">กลับสู่หน้าหลัก</button>
             </div>
         </div>
 
-        <div id="admin-section" class="hidden">
-            <div class="flex flex-wrap justify-between items-center mb-6 gap-4">
-                <h3 class="text-xl font-bold text-gray-800"><i class="fas fa-list-ul mr-2"></i> All Incident Records</h3>
-                <div class="flex flex-wrap items-center gap-3">
-                    <div class="flex items-center gap-2 bg-white px-3 py-1.5 rounded-lg border shadow-sm">
-                        <label class="text-xs font-bold text-gray-400 uppercase">วันที่:</label>
-                        <input type="date" id="filter-date" class="text-sm outline-none border-none">
+        <div id="track-status" class="hidden max-w-lg mx-auto">
+            <div class="bg-white p-8 rounded-2xl shadow-lg border">
+                <h2 class="text-2xl font-bold text-gray-800 mb-6 text-center">🔍 ติดตามสถานะงาน</h2>
+                <div class="space-y-4">
+                    <input type="text" id="search-id" placeholder="กรอกเลข Ticket (เช่น INC260223001)" class="w-full p-4 border-2 border-gray-100 rounded-xl focus:border-orange-500 outline-none text-center font-bold text-xl uppercase tracking-widest">
+                    <button onclick="trackTicket()" id="btnTrack" class="w-full bg-orange-500 text-white font-bold py-4 rounded-xl hover:bg-orange-600 shadow-lg transition">ค้นหาสถานะ</button>
+                </div>
+                <div id="track-result" class="mt-8 hidden border-t pt-6">
+                    <div id="track-found" class="space-y-4">
+                        <div class="flex justify-between items-center"><span class="text-gray-400">สถานะปัจจุบัน:</span><span id="res-status" class="px-3 py-1 rounded-full font-bold"></span></div>
+                        <div class="flex justify-between items-center"><span class="text-gray-400">หัวข้อปัญหา:</span><span id="res-desc" class="font-bold"></span></div>
+                        <div class="flex justify-between items-center"><span class="text-gray-400">วันที่แจ้ง:</span><span id="res-date"></span></div>
                     </div>
-                    <button onclick="exportToExcel()" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-sm font-bold flex items-center gap-2 shadow-md transition">
-                        <i class="fas fa-file-excel"></i> Export Excel
-                    </button>
-                    <button onclick="clearFilter()" class="text-sm text-blue-600 hover:underline">Show All</button>
+                    <div id="track-not-found" class="hidden text-center text-red-500 py-4"><i class="fas fa-exclamation-triangle mr-2"></i> ไม่พบหมายเลข Ticket นี้ในระบบ</div>
                 </div>
             </div>
+        </div>
 
-            <div class="bg-white shadow-xl rounded-xl overflow-hidden border">
+        <div id="admin-dashboard" class="hidden">
+            <div class="flex justify-between items-center mb-6">
+                <h3 class="text-2xl font-bold text-gray-800">All Incident Records</h3>
+                <div class="flex gap-2">
+                    <input type="date" id="filter-date" class="border rounded-lg px-3 py-2 text-sm">
+                    <button onclick="exportToExcel()" class="bg-green-600 text-white px-5 py-2 rounded-lg font-bold hover:bg-green-700 shadow-md">Export Excel</button>
+                </div>
+            </div>
+            <div class="bg-white rounded-2xl shadow-xl overflow-hidden border">
                 <div class="overflow-x-auto">
                     <table class="min-w-full text-left">
-                        <thead class="bg-gray-800 text-white text-[11px] uppercase font-bold">
+                        <thead class="bg-gray-800 text-white text-xs uppercase font-bold tracking-wider">
                             <tr>
                                 <th class="px-4 py-4 text-center">Ref No.</th>
                                 <th class="px-4 py-4">Opened</th>
                                 <th class="px-4 py-4">Caller</th>
-                                <th class="px-4 py-4 text-center">Cat.</th>
-                                <th class="px-4 py-4">Short Description</th>
-                                <th class="px-4 py-4">Contact</th>
+                                <th class="px-4 py-4">Issue</th>
                                 <th class="px-4 py-4 text-center">Images</th>
-                                <th class="px-4 py-4 text-center">Flag</th>
+                                <th class="px-4 py-4 text-center">Status</th>
+                                <th class="px-4 py-4 text-center">Integration</th>
                             </tr>
                         </thead>
-                        <tbody id="ticket-list" class="text-sm divide-y divide-gray-100"></tbody>
+                        <tbody id="admin-list" class="text-sm divide-y divide-gray-100"></tbody>
                     </table>
                 </div>
             </div>
         </div>
+
     </div>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-        import { getFirestore, collection, addDoc, query, orderBy, onSnapshot, where, getCountFromServer } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+        import { getFirestore, collection, addDoc, updateDoc, doc, query, orderBy, onSnapshot, where, getCountFromServer, getDocs } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
         import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js";
 
-        // คัดลอก Config จาก Firebase Console มาวางแทนที่ส่วนนี้ครับ
+        // --- ใส่ Config จาก Firebase ของคุณตรงนี้ ---
         const firebaseConfig = {
             apiKey: "AIzaSyCKhox_fzBzuU9n6Q4hv2fHSiXVUw7_I1U",
             authDomain: "service-now-79151.firebaseapp.com",
@@ -167,106 +171,143 @@
         const db = getFirestore(app);
         const storage = getStorage(app);
 
-        // ฟังก์ชันสร้างเลข Ticket INCYYMMDDXXX
-        async function generateTicketID() {
-            const now = new Date();
-            const YY = now.getFullYear().toString().slice(-2);
-            const MM = String(now.getMonth() + 1).padStart(2, '0');
-            const DD = String(now.getDate()).padStart(2, '0');
-            const dateStr = `${YY}${MM}${DD}`;
-            
-            const qCount = query(collection(db, "incidents"), where("date_only", "==", dateStr));
-            const snapshot = await getCountFromServer(qCount);
-            const nextNumber = String(snapshot.data().count + 1).padStart(3, '0');
-            
-            return { fullID: `INC${dateStr}${nextNumber}`, dateOnly: dateStr };
-        }
+        // --- GLOBAL LOGIC ---
+        window.switchPage = (pageId) => {
+            document.getElementById('main-menu').classList.add('hidden');
+            document.getElementById('user-form').classList.add('hidden');
+            document.getElementById('track-status').classList.add('hidden');
+            document.getElementById('admin-dashboard').classList.add('hidden');
+            document.getElementById('main-nav').classList.remove('hidden');
+            document.getElementById(pageId).classList.remove('hidden');
+        };
 
-        // บันทึก Ticket
+        window.showMenu = () => {
+            document.getElementById('main-menu').classList.remove('hidden');
+            document.getElementById('user-form').classList.add('hidden');
+            document.getElementById('track-status').classList.add('hidden');
+            document.getElementById('admin-dashboard').classList.add('hidden');
+            document.getElementById('main-nav').classList.add('hidden');
+        };
+
+        // --- 1. USER: SUBMIT TICKET ---
         document.getElementById('incidentForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             const btn = document.getElementById('btnSubmit');
             const files = document.getElementById('imageInput').files;
-            if(files.length > 3) return alert("แนบรูปได้สูงสุด 3 รูปครับ");
+            if(files.length > 3) return alert("สูงสุด 3 รูปครับ");
 
-            btn.disabled = true;
-            btn.innerHTML = '<i class="fas fa-spinner animate-spin"></i> บันทึกข้อมูล...';
+            btn.disabled = true; btn.innerText = "กำลังบันทึกข้อมูล...";
 
             try {
-                const { fullID, dateOnly } = await generateTicketID();
-                const imageUrls = [];
+                const now = new Date();
+                const YYMMDD = `${now.getFullYear().toString().slice(-2)}${String(now.getMonth()+1).padStart(2,'0')}${String(now.getDate()).padStart(2,'0')}`;
+                
+                // Get Count for Today
+                const qCount = query(collection(db, "incidents"), where("date_only", "==", YYMMDD));
+                const countSnap = await getCountFromServer(qCount);
+                const ticketID = `INC${YYMMDD}${String(countSnap.data().count + 1).padStart(3, '0')}`;
 
-                // อัปโหลดรูปภาพ
-                for (let file of files) {
-                    const storageRef = ref(storage, `pics/${fullID}/${file.name}`);
-                    const snapshot = await uploadBytes(storageRef, file);
-                    imageUrls.push(await getDownloadURL(snapshot.ref));
+                let urls = [];
+                for(let f of files) {
+                    const sRef = ref(storage, `pics/${ticketID}/${f.name}`);
+                    await uploadBytes(sRef, f);
+                    urls.push(await getDownloadURL(sRef));
                 }
 
                 await addDoc(collection(db, "incidents"), {
-                    ticket_id: fullID,
-                    date_only: dateOnly,
+                    ticket_id: ticketID,
+                    date_only: YYMMDD,
                     caller: document.getElementById('caller').value,
                     category: document.getElementById('category').value,
                     short_description: document.getElementById('short_description').value,
-                    description: document.getElementById('description').value,
                     contact_info: document.getElementById('contact').value,
-                    images: imageUrls,
+                    images: urls,
                     is_pulled: false,
-                    timestamp: new Date()
+                    status: "on process", // DEFAULT STATUS
+                    timestamp: now
                 });
 
-                document.getElementById('display-ticket-id').innerText = fullID;
+                document.getElementById('display-ticket-id').innerText = ticketID;
                 document.getElementById('form-container').classList.add('hidden');
                 document.getElementById('success-container').classList.remove('hidden');
             } catch (err) { alert(err.message); btn.disabled = false; }
         });
 
-        // แสดงผล Dashboard
-        let ticketsData = [];
-        const renderData = (filterDate = "") => {
-            const tbody = document.getElementById('ticket-list');
-            tbody.innerHTML = "";
-            let filtered = filterDate ? ticketsData.filter(t => t.date_only === filterDate.split('-').map(v=>v.slice(-2)).join('')) : ticketsData;
+        // --- 2. USER: TRACK STATUS ---
+        window.trackTicket = async () => {
+            const tid = document.getElementById('search-id').value.trim().toUpperCase();
+            if(!tid) return;
+            
+            const btn = document.getElementById('btnTrack');
+            btn.innerText = "กำลังค้นหา...";
+            document.getElementById('track-result').classList.remove('hidden');
 
-            filtered.forEach(data => {
-                const imgHtml = data.images?.map(url => `<a href="${url}" target="_blank"><img src="${url}" class="h-8 w-8 inline-block border rounded mr-1 object-cover"></a>`).join('') || "-";
+            const q = query(collection(db, "incidents"), where("ticket_id", "==", tid));
+            const snap = await getDocs(q);
+
+            if(snap.empty) {
+                document.getElementById('track-found').classList.add('hidden');
+                document.getElementById('track-not-found').classList.remove('hidden');
+            } else {
+                const data = snap.docs[0].data();
+                document.getElementById('track-found').classList.remove('hidden');
+                document.getElementById('track-not-found').classList.add('hidden');
+                
+                const sEl = document.getElementById('res-status');
+                sEl.innerText = data.status.toUpperCase();
+                sEl.className = data.status === 'completed' ? 'px-3 py-1 rounded-full font-bold bg-green-100 text-green-700' : 'px-3 py-1 rounded-full font-bold bg-amber-100 text-amber-700';
+                
+                document.getElementById('res-desc').innerText = data.short_description;
+                document.getElementById('res-date').innerText = data.timestamp.toDate().toLocaleString('th-TH');
+            }
+            btn.innerText = "ค้นหาสถานะ";
+        };
+
+        // --- 3. ADMIN: UPDATE STATUS & VIEW ---
+        let adminTickets = [];
+        const renderAdmin = () => {
+            const tbody = document.getElementById('admin-list');
+            tbody.innerHTML = "";
+            adminTickets.forEach(t => {
+                const imgs = t.images?.map(u => `<a href="${u}" target="_blank"><img src="${u}" class="h-8 w-8 inline border rounded mr-1 object-cover"></a>`).join('') || "-";
+                
                 tbody.innerHTML += `
-                    <tr>
-                        <td class="px-4 py-3 font-bold text-blue-700 text-center">${data.ticket_id}</td>
-                        <td class="px-4 py-3 text-gray-500 font-mono text-[10px]">${data.timestamp?.toDate().toLocaleString('th-TH')}</td>
-                        <td class="px-4 py-3 font-semibold">${data.caller}</td>
-                        <td class="px-4 py-3 text-center"><span class="px-2 py-0.5 rounded border text-[10px] font-bold ${data.category==='Hardware'?'bg-purple-50 text-purple-700':'bg-blue-50 text-blue-700'}">${data.category}</span></td>
-                        <td class="px-4 py-3">${data.short_description}</td>
-                        <td class="px-4 py-3 text-xs">${data.contact_info}</td>
-                        <td class="px-4 py-3 text-center">${imgHtml}</td>
-                        <td class="px-4 py-3 text-center"><i class="fas ${data.is_pulled?'fa-check-circle text-green-500':'fa-clock text-amber-500'}"></i></td>
+                    <tr class="hover:bg-gray-50 transition">
+                        <td class="px-4 py-4 font-bold text-blue-700 text-center">${t.ticket_id}</td>
+                        <td class="px-4 py-4 text-xs text-gray-500 font-mono">${t.timestamp.toDate().toLocaleString('th-TH')}</td>
+                        <td class="px-4 py-4 font-semibold">${t.caller}</td>
+                        <td class="px-4 py-4">${t.short_description}</td>
+                        <td class="px-4 py-4 text-center">${imgs}</td>
+                        <td class="px-4 py-4 text-center">
+                            <select onchange="updateStatus('${t.doc_id}', this.value)" class="p-1 rounded text-xs border font-bold ${t.status==='completed'?'bg-green-50 text-green-700 border-green-200':'bg-amber-50 text-amber-700 border-amber-200'}">
+                                <option value="on process" ${t.status==='on process'?'selected':''}>On Process</option>
+                                <option value="completed" ${t.status==='completed'?'selected':''}>Completed</option>
+                            </select>
+                        </td>
+                        <td class="px-4 py-4 text-center">
+                            <i class="fas ${t.is_pulled ? 'fa-check-circle text-green-500' : 'fa-clock text-gray-300'}"></i>
+                        </td>
                     </tr>`;
             });
         };
 
+        window.updateStatus = async (docId, newStatus) => {
+            try {
+                await updateDoc(doc(db, "incidents", docId), { status: newStatus });
+            } catch (err) { alert("Error: " + err.message); }
+        };
+
         onSnapshot(query(collection(db, "incidents"), orderBy("timestamp", "desc")), (snap) => {
-            ticketsData = snap.docs.map(d => d.data());
-            renderData(document.getElementById('filter-date').value);
+            adminTickets = snap.docs.map(d => ({ ...d.data(), doc_id: d.id }));
+            renderAdmin();
         });
 
-        document.getElementById('filter-date').onchange = (e) => renderData(e.target.value);
-        window.clearFilter = () => { document.getElementById('filter-date').value = ""; renderData(); };
-
-        // Export Excel
         window.exportToExcel = () => {
-            const ws = XLSX.utils.json_to_sheet(ticketsData.map(t => ({ "Ref No": t.ticket_id, "Opened": t.timestamp?.toDate().toLocaleString(), "Caller": t.caller, "Category": t.category, "Subject": t.short_description, "Contact": t.contact_info, "Integrated": t.is_pulled ? "YES" : "NO" })));
+            const ws = XLSX.utils.json_to_sheet(adminTickets.map(t => ({ ID: t.ticket_id, Caller: t.caller, Issue: t.short_description, Status: t.status })));
             const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, "Incidents");
-            XLSX.writeFile(wb, `Report_${new Date().toLocaleDateString()}.xlsx`);
+            XLSX.writeFile(wb, `Report_FTH_${new Date().toLocaleDateString()}.xlsx`);
         };
-    </script>
-    <script>
-        function switchTab(id) {
-            document.getElementById('user-section').classList.toggle('hidden', id !== 'user-section');
-            document.getElementById('admin-section').classList.toggle('hidden', id !== 'admin-section');
-            document.getElementById('tab-user').classList.toggle('tab-active', id === 'user-section');
-            document.getElementById('tab-admin').classList.toggle('tab-active', id === 'admin-section');
-        }
+
     </script>
 </body>
 </html>
