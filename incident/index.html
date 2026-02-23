@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FTH Support Portal - v.4.2 Reporting</title>
+    <title>FTH Support Portal - v.4.3 Streamlined</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
@@ -27,17 +27,17 @@
         <div id="main-menu" class="max-w-2xl mx-auto py-12 text-center">
             <div class="mb-10">
                 <div class="bg-blue-600 w-20 h-20 rounded-3xl text-white flex items-center justify-center mx-auto mb-6 shadow-2xl text-3xl font-black italic">FTH</div>
-                <h1 class="text-4xl font-black text-gray-800 tracking-tight">Support Portal</h1>
-                <p class="text-gray-400 mt-3 italic text-sm">Professional Incident Management v.4.2</p>
+                <h1 class="text-4xl font-black text-gray-800 tracking-tight text-center">Support Portal</h1>
+                <p class="text-gray-400 mt-3 italic text-sm text-center">Simplified Incident Management v.4.3</p>
             </div>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
                 <button onclick="switchPage('user-form')" class="bg-white p-10 rounded-3xl shadow-xl border-4 border-transparent hover:border-blue-500 transition-all group">
                     <i class="fas fa-edit text-5xl text-blue-600 mb-5 group-hover:scale-110 transition"></i>
-                    <h3 class="text-2xl font-bold text-gray-800">แจ้งปัญหาใหม่</h3>
+                    <h3 class="text-2xl font-bold text-gray-800 text-center">แจ้งปัญหาใหม่</h3>
                 </button>
                 <button onclick="switchPage('track-status')" class="bg-white p-10 rounded-3xl shadow-xl border-4 border-transparent hover:border-orange-500 transition-all group">
                     <i class="fas fa-search-location text-5xl text-orange-500 mb-5 group-hover:scale-110 transition"></i>
-                    <h3 class="text-2xl font-bold text-gray-800">ติดตามสถานะ</h3>
+                    <h3 class="text-2xl font-bold text-gray-800 text-center">ติดตามสถานะ</h3>
                 </button>
             </div>
             <button onclick="switchPage('admin-dashboard')" class="mt-16 text-gray-300 hover:text-gray-500 text-xs underline transition italic">Management Console & Analytics</button>
@@ -83,13 +83,12 @@
                             <select id="category" class="w-full p-3 border-2 border-gray-50 rounded-xl outline-none focus:border-blue-500 shadow-sm"><option>Hardware</option><option>Software</option></select>
                         </div>
                     </div>
+
+                    <input type="hidden" id="short_description" value="Incident Report">
+
                     <div>
-                        <label class="block text-xs font-bold text-gray-500 mb-1 uppercase tracking-wider">หัวข้อปัญหา *</label>
-                        <input type="text" id="short_description" placeholder="ระบุอาการสั้นๆ" class="w-full p-3 border-2 border-gray-50 rounded-xl outline-none focus:border-blue-500 transition shadow-sm" required>
-                    </div>
-                    <div>
-                        <label class="block text-xs font-bold text-gray-500 mb-1 uppercase tracking-wider">รายละเอียดปัญหา</label>
-                        <textarea id="description" rows="3" placeholder="ระบุรายละเอียดเพิ่มเติม..." class="w-full p-3 border-2 border-gray-50 rounded-xl outline-none focus:border-blue-500 transition shadow-sm"></textarea>
+                        <label class="block text-xs font-bold text-gray-500 mb-1 uppercase tracking-wider">รายละเอียดปัญหา *</label>
+                        <textarea id="description" rows="5" placeholder="กรุณาระบุรายละเอียดปัญหาที่เกิดขึ้น..." class="w-full p-3 border-2 border-gray-50 rounded-xl outline-none focus:border-blue-500 transition shadow-sm" required></textarea>
                     </div>
                     <div class="bg-blue-50 p-4 rounded-xl border border-blue-100">
                         <label class="block text-xs font-bold text-blue-600 mb-2 uppercase italic tracking-tighter"><i class="fas fa-compress-arrows-alt"></i> ระบบบีบอัดรูปอัตโนมัติ (ไม่เกิน 0.8MB)</label>
@@ -102,7 +101,7 @@
             </div>
             <div id="success-container" class="hidden bg-white p-12 rounded-3xl shadow-2xl max-w-md mx-auto text-center border">
                 <div class="text-green-500 text-7xl mb-6 animate-bounce"><i class="fas fa-check-circle"></i></div>
-                <h2 class="text-3xl font-black text-blue-700 font-mono tracking-widest mb-6" id="display-ticket-id"></h2>
+                <h2 class="text-3xl font-black text-blue-700 font-mono tracking-widest mb-6 text-center" id="display-ticket-id"></h2>
                 <button onclick="showMenu()" class="w-full py-4 bg-gray-100 rounded-2xl font-bold text-gray-500 hover:bg-gray-200 transition">Back to Home</button>
             </div>
         </div>
@@ -110,11 +109,14 @@
         <div id="track-status" class="hidden max-w-lg mx-auto">
             <div class="bg-white p-10 rounded-3xl shadow-2xl border text-center">
                 <h2 class="text-2xl font-bold text-gray-800 mb-8"><i class="fas fa-search-location text-orange-500 mr-2"></i> ติดตามสถานะ</h2>
-                <input type="text" id="search-id" placeholder="INCxxxxxxxx" class="w-full p-5 border-2 border-gray-50 rounded-2xl outline-none text-center font-black text-2xl uppercase tracking-widest mb-6 shadow-sm">
+                <input type="text" id="search-id" placeholder="INCxxxxxxxx" class="w-full p-5 border-2 border-gray-100 rounded-2xl outline-none text-center font-black text-2xl uppercase tracking-widest mb-6 shadow-sm">
                 <button onclick="trackTicket()" id="btnTrack" class="w-full bg-orange-500 text-white font-black py-5 rounded-2xl shadow-lg hover:bg-orange-600 transition-all uppercase tracking-widest">Search</button>
                 <div id="track-result" class="mt-8 hidden border-t-2 pt-6 text-left space-y-4">
-                    <div class="flex justify-between items-center"><span class="text-gray-400 font-bold uppercase text-xs">Status:</span><span id="res-status" class="font-black px-4 py-1 rounded-full text-sm"></span></div>
-                    <div class="flex justify-between items-center"><span class="text-gray-400 font-bold uppercase text-xs">Subject:</span><span id="res-desc" class="font-bold text-gray-700"></span></div>
+                    <div class="flex justify-between items-center"><span class="text-gray-400 font-bold uppercase text-xs">Status:</span><span id="res-status" class="font-black px-4 py-1 rounded-full text-xs"></span></div>
+                    <div class="flex flex-col gap-1">
+                        <span class="text-gray-400 font-bold uppercase text-[10px]">Description:</span>
+                        <span id="res-desc" class="font-bold text-gray-700 text-sm italic"></span>
+                    </div>
                 </div>
             </div>
         </div>
@@ -123,22 +125,16 @@
             <div class="flex flex-col md:flex-row justify-between items-start md:items-end mb-8 gap-4">
                 <div>
                     <h3 class="text-3xl font-black text-gray-800 tracking-tight">Management Console</h3>
-                    <p class="text-gray-400 text-sm">ตรวจสอบ จัดการสถานะ และส่งออกข้อมูลวิเคราะห์</p>
+                    <p class="text-gray-400 text-sm">ตรวจสอบ จัดการ และส่งออกข้อมูล (Streamlined v.4.3)</p>
                 </div>
                 
                 <div class="flex flex-wrap items-center gap-3 bg-white p-3 rounded-2xl shadow-sm border border-gray-100">
-                    <div class="flex flex-col">
-                        <label class="text-[10px] font-bold text-gray-400 uppercase ml-1 mb-1">From</label>
-                        <input type="date" id="start-date" class="border-none text-xs outline-none bg-gray-50 p-1 rounded">
-                    </div>
+                    <div class="flex flex-col"><label class="text-[10px] font-bold text-gray-400 uppercase ml-1 mb-1">From</label><input type="date" id="start-date" class="border-none text-xs outline-none bg-gray-50 p-1 rounded"></div>
                     <div class="text-gray-300">|</div>
-                    <div class="flex flex-col">
-                        <label class="text-[10px] font-bold text-gray-400 uppercase ml-1 mb-1">To</label>
-                        <input type="date" id="end-date" class="border-none text-xs outline-none bg-gray-50 p-1 rounded">
-                    </div>
+                    <div class="flex flex-col"><label class="text-[10px] font-bold text-gray-400 uppercase ml-1 mb-1">To</label><input type="date" id="end-date" class="border-none text-xs outline-none bg-gray-50 p-1 rounded"></div>
                     <button onclick="clearDateFilter()" class="text-xs text-blue-500 hover:text-blue-700 font-bold ml-2">Clear</button>
-                    <button onclick="exportToExcel()" class="bg-green-600 text-white px-5 py-2.5 rounded-xl font-bold hover:bg-green-700 transition shadow-lg text-xs flex items-center gap-2">
-                        <i class="fas fa-file-excel"></i> EXCEL REPORT
+                    <button onclick="exportToExcel()" class="bg-green-600 text-white px-5 py-2.5 rounded-xl font-bold hover:bg-green-700 transition shadow-lg text-xs flex items-center gap-2 uppercase tracking-tighter">
+                        <i class="fas fa-file-excel"></i> Export Excel
                     </button>
                 </div>
             </div>
@@ -151,8 +147,8 @@
                                 <th class="px-6 py-5 text-center">Ticket ID</th>
                                 <th class="px-6 py-5 text-center">Opened</th>
                                 <th class="px-6 py-5">Caller</th>
+                                <th class="px-6 py-5">Description (Preview)</th>
                                 <th class="px-6 py-5 text-center">Status</th>
-                                <th class="px-6 py-5 text-center">Flag</th>
                                 <th class="px-6 py-5 text-center">View</th>
                             </tr>
                         </thead>
@@ -170,10 +166,14 @@
                 <button onclick="closeModal()" class="text-gray-300 hover:text-gray-900 transition"><i class="fas fa-times-circle text-2xl"></i></button>
             </div>
             <div class="space-y-6 text-sm">
+                <div class="grid grid-cols-2 gap-4">
+                    <p><span class="text-gray-400 font-black uppercase text-[10px] block">Caller:</span> <span id="modal-caller" class="font-bold"></span></p>
+                    <p><span class="text-gray-400 font-black uppercase text-[10px] block">Contact:</span> <span id="modal-contact" class="font-bold"></span></p>
+                </div>
                 <div class="bg-blue-50/50 p-5 rounded-2xl border-2 border-blue-50 italic text-gray-700 whitespace-pre-wrap leading-relaxed shadow-inner" id="modal-desc"></div>
                 <div><span class="text-gray-400 font-black uppercase text-[10px] block mb-3 tracking-widest">Attachments:</span><div id="modal-images" class="flex gap-3 overflow-x-auto pb-4"></div></div>
             </div>
-            <button onclick="closeModal()" class="w-full mt-8 py-5 bg-gray-900 text-white rounded-2xl font-bold hover:bg-black shadow-xl transition-all uppercase tracking-widest">Close Record</button>
+            <button onclick="closeModal()" class="w-full mt-8 py-5 bg-gray-900 text-white rounded-2xl font-bold hover:bg-black shadow-xl transition-all uppercase tracking-widest text-center">Close Record</button>
         </div>
     </div>
 
@@ -195,7 +195,6 @@
         const db = getFirestore(app);
         const storage = getStorage(app);
 
-        // UI Pages Switcher
         window.switchPage = (p) => { 
             document.querySelectorAll('div[id$="-form"], div[id$="-dashboard"], div[id$="-status"], #main-menu').forEach(d => d.classList.add('hidden'));
             document.getElementById(p).classList.remove('hidden');
@@ -203,12 +202,11 @@
         };
         window.showMenu = () => switchPage('main-menu');
 
-        // Logic: Submit with Compression (Keep v.4.1)
         document.getElementById('incidentForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             const btn = document.getElementById('btnSubmit');
             const files = document.getElementById('imageInput').files;
-            btn.disabled = true; btn.innerHTML = '<i class="fas fa-circle-notch animate-spin"></i> Processing & Uploading...';
+            btn.disabled = true; btn.innerHTML = '<i class="fas fa-circle-notch animate-spin"></i> Processing...';
 
             try {
                 const now = new Date();
@@ -231,11 +229,11 @@
                     ticket_id: tID, date_only: YYMMDD, 
                     caller: document.getElementById('caller').value,
                     contact_info: document.getElementById('contact').value, 
-                    short_description: document.getElementById('short_description').value,
+                    short_description: "Incident Report", // Default value
                     description: document.getElementById('description').value, 
                     images: imageUrls, status: "on process", is_pulled: false, 
                     timestamp: now,
-                    iso_date: now.toISOString().split('T')[0] // สำหรับ Filter วันที่
+                    iso_date: now.toISOString().split('T')[0]
                 });
 
                 document.getElementById('display-ticket-id').innerText = tID;
@@ -244,10 +242,8 @@
             } catch (err) { alert("Error: " + err.message); btn.disabled = false; btn.innerText = "Submit Incident"; }
         });
 
-        // Track Ticket (Logic as v.4.1)
         window.trackTicket = async () => {
             const tid = document.getElementById('search-id').value.trim().toUpperCase();
-            if(!tid) return;
             const q = query(collection(db, "incidents"), where("ticket_id", "==", tid));
             const snap = await getDocs(q);
             document.getElementById('track-result').classList.remove('hidden');
@@ -258,54 +254,51 @@
                 const d = snap.docs[0].data();
                 const s = document.getElementById('res-status');
                 s.innerText = d.status.toUpperCase();
-                s.className = `font-black px-4 py-1 rounded-full text-xs ${d.status==='completed'?'bg-green-100 text-green-700':'bg-amber-100 text-amber-700'}`;
-                document.getElementById('res-desc').innerText = d.short_description;
+                s.className = `font-black px-4 py-1 rounded-full text-[10px] ${d.status==='completed'?'bg-green-100 text-green-700':'bg-amber-100 text-amber-700'}`;
+                document.getElementById('res-desc').innerText = d.description.substring(0, 50) + "...";
                 document.getElementById('track-found').classList.remove('hidden'); 
                 document.getElementById('track-not-found').classList.add('hidden');
             }
         };
 
-        // Admin & Reporting Logic (New v.4.2)
         let adminTickets = [];
         window.updateStatus = async (id, s) => { await updateDoc(doc(db, "incidents", id), { status: s }); };
         
         window.openDetail = (docId) => {
             const t = adminTickets.find(x => x.doc_id === docId);
             document.getElementById('modal-id').innerText = t.ticket_id;
-            document.getElementById('modal-desc').innerText = t.description || "- No extra details provided -";
-            document.getElementById('modal-images').innerHTML = t.images?.map(u => `<a href="${u}" target="_blank"><img src="${u}" class="h-28 w-28 object-cover rounded-3xl border-4 border-gray-50 shadow-sm hover:border-blue-500 transition-all"></a>`).join('') || "-";
+            document.getElementById('modal-caller').innerText = t.caller;
+            document.getElementById('modal-contact').innerText = t.contact_info;
+            document.getElementById('modal-desc').innerText = t.description;
+            document.getElementById('modal-images').innerHTML = t.images?.map(u => `<a href="${u}" target="_blank"><img src="${u}" class="h-28 w-28 object-cover rounded-3xl border-4 border-gray-50 hover:border-blue-500 shadow-sm transition-all"></a>`).join('') || "-";
             document.getElementById('detail-modal').classList.add('modal-active');
         };
         window.closeModal = () => document.getElementById('detail-modal').classList.remove('modal-active');
 
-        // Render & Date Filter
         const renderAdminList = () => {
             const start = document.getElementById('start-date').value;
             const end = document.getElementById('end-date').value;
             const tbody = document.getElementById('admin-list');
             tbody.innerHTML = "";
-
             let filtered = adminTickets;
-            if (start && end) {
-                filtered = adminTickets.filter(t => t.iso_date >= start && t.iso_date <= end);
-            } else if (start) {
-                filtered = adminTickets.filter(t => t.iso_date === start);
-            }
+            if (start && end) filtered = adminTickets.filter(t => t.iso_date >= start && t.iso_date <= end);
+            else if (start) filtered = adminTickets.filter(t => t.iso_date === start);
 
             filtered.forEach(t => {
+                const preview = t.description.substring(0, 40) + (t.description.length > 40 ? "..." : "");
                 tbody.innerHTML += `
                     <tr class="hover:bg-blue-50/50 transition duration-300">
-                        <td class="px-6 py-5 font-black text-blue-600 text-center font-mono tracking-tighter text-sm italic">${t.ticket_id}</td>
+                        <td class="px-6 py-5 font-black text-blue-600 text-center font-mono tracking-tighter italic">${t.ticket_id}</td>
                         <td class="px-6 py-5 text-[10px] text-gray-400 font-mono text-center">${t.timestamp.toDate().toLocaleString('th-TH', {hour12:false})}</td>
                         <td class="px-6 py-5 font-bold text-gray-700">${t.caller}</td>
+                        <td class="px-6 py-5 text-xs text-gray-500 italic">${preview}</td>
                         <td class="px-6 py-5 text-center">
-                            <select onchange="updateStatus('${t.doc_id}', this.value)" class="text-[9px] border-2 border-gray-100 rounded-lg font-black uppercase outline-none px-2 py-1 shadow-sm bg-white cursor-pointer hover:border-blue-200">
+                            <select onchange="updateStatus('${t.doc_id}', this.value)" class="text-[9px] border-2 border-gray-100 rounded-lg font-black uppercase outline-none px-2 py-1 bg-white hover:border-blue-200">
                                 <option value="on process" ${t.status==='on process'?'selected':''}>ON PROCESS</option>
                                 <option value="completed" ${t.status==='completed'?'selected':''}>COMPLETED</option>
                             </select>
                         </td>
-                        <td class="px-6 py-5 text-center"><i class="fas ${t.is_pulled ? 'fa-check-circle text-green-500':'fa-clock text-amber-500'} text-lg drop-shadow-sm"></i></td>
-                        <td class="px-6 py-5 text-center"><button onclick="openDetail('${t.doc_id}')" class="bg-gray-900 text-white w-9 h-9 rounded-xl hover:scale-110 transition shadow-lg inline-flex items-center justify-center"><i class="fas fa-eye text-xs"></i></button></td>
+                        <td class="px-6 py-5 text-center"><button onclick="openDetail('${t.doc_id}')" class="bg-gray-900 text-white w-9 h-9 rounded-xl hover:scale-110 transition shadow-lg inline-flex items-center justify-center"><i class="fas fa-eye text-xs text-center"></i></button></td>
                     </tr>`;
             });
         };
@@ -317,49 +310,28 @@
 
         document.getElementById('start-date').addEventListener('change', renderAdminList);
         document.getElementById('end-date').addEventListener('change', renderAdminList);
-        window.clearDateFilter = () => {
-            document.getElementById('start-date').value = "";
-            document.getElementById('end-date').value = "";
-            renderAdminList();
-        };
+        window.clearDateFilter = () => { document.getElementById('start-date').value = ""; document.getElementById('end-date').value = ""; renderAdminList(); };
 
-        // Professional Excel Export (Improved v.4.2)
         window.exportToExcel = () => {
             const start = document.getElementById('start-date').value;
             const end = document.getElementById('end-date').value;
             let dataForExport = adminTickets;
+            if (start && end) dataForExport = adminTickets.filter(t => t.iso_date >= start && t.iso_date <= end);
 
-            if (start && end) {
-                dataForExport = adminTickets.filter(t => t.iso_date >= start && t.iso_date <= end);
-            }
-
-            // จัดฟอร์แมตข้อมูลดิบให้สวยงามและครบถ้วน
             const formattedData = dataForExport.map(t => ({
                 "TICKET ID": t.ticket_id,
-                "DATE TIME": t.timestamp.toDate().toLocaleString('th-TH'),
+                "OPENED": t.timestamp.toDate().toLocaleString('th-TH'),
                 "BRANCH (CALLER)": t.caller,
-                "CATEGORY": t.category,
-                "CONTACT INFO": t.contact_info,
-                "SUBJECT": t.short_description,
-                "FULL DESCRIPTION": t.description || "-",
-                "STATUS": t.status.toUpperCase(),
-                "SERVICE NOW INTEGRATED": t.is_pulled ? "YES" : "NO"
+                "CONTACT": t.contact_info,
+                "DESCRIPTION": t.description,
+                "STATUS": t.status.toUpperCase()
             }));
 
             const ws = XLSX.utils.json_to_sheet(formattedData);
-            
-            // ปรับความกว้างคอลัมน์อัตโนมัติ
-            const colWidths = [
-                {wch: 15}, {wch: 25}, {wch: 30}, {wch: 12}, 
-                {wch: 25}, {wch: 35}, {wch: 50}, {wch: 15}, {wch: 20}
-            ];
-            ws['!cols'] = colWidths;
-
+            ws['!cols'] = [{wch: 15}, {wch: 25}, {wch: 30}, {wch: 25}, {wch: 60}, {wch: 15}];
             const wb = XLSX.utils.book_new();
-            XLSX.utils.book_append_sheet(wb, ws, "FTH_Support_Report");
-            
-            const fileName = `FTH_Support_Report_${new Date().toISOString().split('T')[0]}.xlsx`;
-            XLSX.writeFile(wb, fileName);
+            XLSX.utils.book_append_sheet(wb, ws, "FTH_Report");
+            XLSX.writeFile(wb, `FTH_Report_${new Date().toISOString().split('T')[0]}.xlsx`);
         };
     </script>
 </body>
