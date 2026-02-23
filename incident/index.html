@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FTH Support Portal - v.4.8 Optimized Flow</title>
+    <title>FTH Support Portal - v.4.9 Contact Restore</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
@@ -28,7 +28,7 @@
             <div class="mb-10 text-center">
                 <div class="bg-blue-600 w-20 h-20 rounded-3xl text-white flex items-center justify-center mx-auto mb-6 shadow-2xl text-3xl font-black italic">FTH</div>
                 <h1 class="text-4xl font-black text-gray-800 tracking-tight">Support Portal</h1>
-                <p class="text-gray-400 mt-3 italic text-sm text-center">v.4.8 - Flow Optimization</p>
+                <p class="text-gray-400 mt-3 italic text-sm text-center">v.4.9 - Contact Info Restored for Support Team</p>
             </div>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
                 <button onclick="switchPage('user-form')" class="bg-white p-10 rounded-3xl shadow-xl border-4 border-transparent hover:border-blue-500 transition-all group">
@@ -86,18 +86,18 @@
                 </form>
             </div>
             <div id="success-container" class="hidden bg-white p-12 rounded-3xl shadow-2xl max-w-md mx-auto text-center border">
-                <div class="text-green-500 text-7xl mb-6 animate-bounce"><i class="fas fa-check-circle"></i></div>
+                <div class="text-green-500 text-7xl mb-6 animate-bounce"><i class="fas fa-check-circle text-center"></i></div>
                 <h2 class="text-3xl font-black text-blue-700 font-mono tracking-widest mb-8 text-center" id="display-ticket-id"></h2>
                 
                 <button onclick="finishAndGoHome()" class="w-full py-4 bg-gray-900 text-white rounded-2xl font-bold hover:bg-black shadow-lg transition flex items-center justify-center gap-2">
-                    <i class="fas fa-home"></i> กลับไปหน้าหลัก (Finish)
+                    <i class="fas fa-home text-center"></i> กลับไปหน้าหลัก (Finish)
                 </button>
             </div>
         </div>
 
         <div id="track-status" class="hidden max-w-lg mx-auto">
             <div class="bg-white p-10 rounded-3xl shadow-2xl border text-center">
-                <h2 class="text-2xl font-bold text-gray-800 mb-8">🔍 ติดตามสถานะ</h2>
+                <h2 class="text-2xl font-bold text-gray-800 mb-8 text-center">🔍 ติดตามสถานะ</h2>
                 <input type="text" id="search-id" placeholder="INCxxxxxxxx" class="w-full p-5 border-2 border-gray-100 rounded-2xl outline-none text-center font-black text-2xl uppercase tracking-widest mb-6 shadow-sm">
                 <button onclick="trackTicket()" id="btnTrack" class="w-full bg-orange-500 text-white font-black py-5 rounded-2xl shadow-lg hover:bg-orange-600 uppercase transition-all">Search Status</button>
                 <div id="track-result" class="mt-8 hidden border-t-2 pt-6 text-left space-y-4">
@@ -113,8 +113,8 @@
         <div id="admin-dashboard" class="hidden animate-fade-in">
             <div class="flex flex-col lg:flex-row justify-between items-start lg:items-end mb-8 gap-4">
                 <div class="text-center md:text-left">
-                    <h3 class="text-3xl font-black text-gray-800 tracking-tight">Management Console</h3>
-                    <p class="text-gray-400 text-sm italic">Filter by Date Range (ค.ศ.)</p>
+                    <h3 class="text-3xl font-black text-gray-800 tracking-tight text-center">Management Console</h3>
+                    <p class="text-gray-400 text-sm italic text-center">Filter by Date Range (ค.ศ.)</p>
                 </div>
                 <div class="flex flex-wrap items-center gap-3 bg-white p-4 rounded-3xl shadow-sm border border-gray-100 justify-center">
                     <div class="flex flex-col"><label class="text-[10px] font-bold text-gray-400 uppercase ml-1 mb-1 italic">Start</label><input type="date" id="start-date" class="border rounded-lg text-xs outline-none bg-gray-50 p-2 border-gray-100"></div>
@@ -133,7 +133,7 @@
                                 <th class="px-6 py-5 text-center">Ticket ID</th>
                                 <th class="px-6 py-5 text-center">Date</th>
                                 <th class="px-6 py-5">Caller</th>
-                                <th class="px-6 py-5">Preview</th>
+                                <th class="px-6 py-5">Contact Info</th> <th class="px-6 py-5">Preview</th>
                                 <th class="px-6 py-5 text-center">Status</th>
                                 <th class="px-6 py-5 text-center">Action</th>
                             </tr>
@@ -146,12 +146,16 @@
     </div>
 
     <div id="detail-modal" class="fixed inset-0 bg-black/60 hidden z-[100] items-center justify-center p-4 backdrop-blur-sm">
-        <div class="bg-white rounded-[2.5rem] max-w-2xl w-full p-8 shadow-2xl">
+        <div class="bg-white rounded-[2.5rem] max-w-2xl w-full p-8 shadow-2xl animate-scale-up">
             <div class="flex justify-between items-center mb-6 border-b pb-4">
                 <h3 id="modal-id" class="text-2xl font-black text-blue-600 font-mono uppercase text-center"></h3>
                 <button onclick="closeModal()" class="text-gray-300 hover:text-gray-900 transition"><i class="fas fa-times-circle text-2xl text-center"></i></button>
             </div>
             <div class="space-y-6 text-sm text-center">
+                <div class="grid grid-cols-2 gap-4 text-left bg-gray-50 p-4 rounded-xl">
+                    <p><span class="text-gray-400 text-xs block uppercase font-bold">Caller:</span> <span id="modal-caller" class="font-bold"></span></p>
+                    <p><span class="text-gray-400 text-xs block uppercase font-bold">Contact:</span> <span id="modal-contact" class="font-bold text-blue-600 underline"></span></p>
+                </div>
                 <div class="bg-blue-50/50 p-5 rounded-2xl border-2 border-blue-50 italic text-gray-700 whitespace-pre-wrap leading-relaxed shadow-inner text-left" id="modal-desc"></div>
                 <div><span class="text-gray-400 font-black uppercase text-[10px] block mb-3 tracking-widest text-center">Attachments:</span><div id="modal-images" class="flex gap-3 overflow-x-auto pb-4"></div></div>
             </div>
@@ -184,7 +188,6 @@
             document.getElementById('main-nav').classList.toggle('hidden', p === 'main-menu');
         };
 
-        // Feature: Clear all and Home
         window.finishAndGoHome = () => {
             const form = document.getElementById('incidentForm');
             const btn = document.getElementById('btnSubmit');
@@ -192,17 +195,15 @@
             document.getElementById('imageInput').value = "";
             btn.disabled = false;
             btn.innerHTML = "Submit Ticket";
-            
-            document.getElementById('display-ticket-id').innerText = ""; // Clear old Job ID
+            document.getElementById('display-ticket-id').innerText = ""; 
             document.getElementById('success-container').classList.add('hidden');
             document.getElementById('form-container').classList.remove('hidden');
-            
             switchPage('main-menu');
         };
 
         window.showMenu = () => finishAndGoHome();
 
-        // Submit (v.4.8 Logic)
+        // Submit (v.4.9 Logic)
         document.getElementById('incidentForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             const btn = document.getElementById('btnSubmit');
@@ -242,12 +243,15 @@
             } catch (err) { alert(err.message); btn.disabled = false; btn.innerText = "Submit Ticket"; }
         });
 
-        // Other Logic
+        // Admin (v.4.9 Logic - Restored Contact)
         let adminTickets = [];
         window.updateStatus = async (id, s) => { await updateDoc(doc(db, "incidents", id), { status: s }); };
+        
         window.openDetail = (docId) => {
             const t = adminTickets.find(x => x.doc_id === docId);
             document.getElementById('modal-id').innerText = t.ticket_id;
+            document.getElementById('modal-caller').innerText = t.caller;
+            document.getElementById('modal-contact').innerText = t.contact_info; // Restored
             document.getElementById('modal-desc').innerText = t.description;
             document.getElementById('modal-images').innerHTML = t.images?.map(u => `<a href="${u}" target="_blank"><img src="${u}" class="h-24 w-24 object-cover rounded-2xl border-4 shadow-sm hover:border-blue-500 transition-all text-center"></a>`).join('') || "-";
             document.getElementById('detail-modal').classList.add('modal-active');
@@ -270,7 +274,7 @@
                         <td class="px-6 py-5 font-black text-blue-600 text-center font-mono italic text-sm">${t.ticket_id}</td>
                         <td class="px-6 py-5 text-[10px] text-gray-400 font-mono text-center">${d.getDate()}/${d.getMonth()+1}/${d.getFullYear()}</td>
                         <td class="px-6 py-5 font-bold text-gray-700">${t.caller}</td>
-                        <td class="px-6 py-5 text-xs text-gray-500 italic">${t.description.substring(0,40)}...</td>
+                        <td class="px-6 py-5 font-bold text-blue-500 text-xs">${t.contact_info}</td> <td class="px-6 py-5 text-xs text-gray-500 italic">${t.description.substring(0,40)}...</td>
                         <td class="px-6 py-5 text-center">
                             <select onchange="updateStatus('${t.doc_id}', this.value)" class="text-[9px] border-2 border-gray-100 rounded-lg font-black uppercase outline-none px-2 py-1 bg-white cursor-pointer hover:border-blue-500">
                                 <option value="on process" ${t.status==='on process'?'selected':''}>ON PROCESS</option>
@@ -310,11 +314,18 @@
             const end = document.getElementById('end-date').value;
             let dataForExport = adminTickets;
             if (start && end) dataForExport = adminTickets.filter(t => t.iso_date >= start && t.iso_date <= end);
-            const formatted = dataForExport.map(t => ({ "TICKET ID": t.ticket_id, "OPENED": t.timestamp.toDate().toLocaleString('th-TH'), "BRANCH": t.caller, "DESCRIPTION": t.description, "STATUS": t.status.toUpperCase() }));
+            const formatted = dataForExport.map(t => ({ 
+                "TICKET ID": t.ticket_id, 
+                "OPENED": t.timestamp.toDate().toLocaleString('th-TH'), 
+                "BRANCH": t.caller, 
+                "CONTACT": t.contact_info, // Added to Excel
+                "DESCRIPTION": t.description, 
+                "STATUS": t.status.toUpperCase() 
+            }));
             const ws = XLSX.utils.json_to_sheet(formatted);
-            ws['!cols'] = [{wch: 18}, {wch: 25}, {wch: 30}, {wch: 60}, {wch: 15}];
+            ws['!cols'] = [{wch: 18}, {wch: 25}, {wch: 30}, {wch: 20}, {wch: 60}, {wch: 15}];
             const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, "FTH_Report");
-            XLSX.writeFile(wb, `FTH_Report_v4.8_${new Date().toISOString().split('T')[0]}.xlsx`);
+            XLSX.writeFile(wb, `FTH_Report_v4.9_${new Date().toISOString().split('T')[0]}.xlsx`);
         };
     </script>
 </body>
