@@ -3,43 +3,45 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ServiceNow Simplified Portal</title>
+    <title>FTH Support Portal</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;600;700&display=swap');
         body { font-family: 'Sarabun', sans-serif; }
-        .tab-active { border-bottom: 4px solid #ed1c24; color: #ed1c24; }
+        .tab-active { border-bottom: 4px solid #2563eb; color: #2563eb; }
+        .hidden { display: none; }
     </style>
 </head>
-<body class="bg-[#f3f4f6] min-h-screen">
+<body class="bg-gray-50 min-h-screen">
 
-    <nav class="bg-white shadow-md mb-6 sticky top-0 z-50">
+    <nav class="bg-white shadow-sm sticky top-0 z-50">
         <div class="max-w-7xl mx-auto flex px-4">
-            <button onclick="switchTab('user-form')" id="tab-user" class="px-6 py-4 font-bold tab-active transition flex items-center gap-2">
-                <i class="fas fa-edit"></i> แจ้งปัญหา (User)
+            <button onclick="switchTab('user-section')" id="tab-user" class="px-6 py-4 font-bold tab-active transition flex items-center gap-2">
+                <i class="fas fa-ticket-alt"></i> แจ้งปัญหา (User)
             </button>
-            <button onclick="switchTab('admin-dashboard')" id="tab-admin" class="px-6 py-4 font-bold text-gray-500 hover:text-red-600 transition flex items-center gap-2">
-                <i class="fas fa-chart-line"></i> Dashboard (Admin)
+            <button onclick="switchTab('admin-section')" id="tab-admin" class="px-6 py-4 font-bold text-gray-500 hover:text-blue-600 transition flex items-center gap-2">
+                <i class="fas fa-tools"></i> Dashboard (Admin)
             </button>
         </div>
     </nav>
 
-    <div class="max-w-7xl mx-auto px-4 pb-12">
+    <div class="max-w-7xl mx-auto px-4 py-8">
         
-        <div id="user-form" class="block">
-            <div class="bg-white p-8 rounded-2xl shadow-xl max-w-2xl mx-auto border border-gray-100">
-                <div class="flex items-center gap-4 mb-8 border-b pb-6">
-                    <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/5/53/Fujitsu-Logo.svg/1280px-Fujitsu-Logo.svg.png" 
-                         alt="Fujitsu" class="h-10 w-auto">
-                    <div class="h-8 w-[2px] bg-gray-200 mx-2"></div>
-                    <h2 class="text-2xl font-bold text-gray-800 uppercase tracking-tight">Incident Ticket</h2>
+        <div id="user-section">
+            <div id="form-container" class="bg-white p-8 rounded-2xl shadow-lg max-w-2xl mx-auto border">
+                <div class="flex items-center gap-3 mb-8 border-b pb-6">
+                    <div class="bg-blue-600 p-2 rounded-lg text-white">
+                        <i class="fas fa-headset text-2xl"></i>
+                    </div>
+                    <h2 class="text-2xl font-bold text-gray-800 tracking-tight">FTH Support Portal</h2>
                 </div>
                 
                 <form id="incidentForm" class="space-y-5">
                     <div>
-                        <label class="block text-sm font-bold text-gray-700 mb-1">สาขาที่แจ้ง (Caller) <span class="text-red-500">*</span></label>
-                        <select id="caller" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 outline-none transition" required>
+                        <label class="block text-sm font-bold text-gray-700 mb-1">สาขาที่แจ้ง (Caller) *</label>
+                        <select id="caller" class="w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" required>
                             <option value="">-- กรุณาเลือกสาขา --</option>
                             <option>MALL-0006 The Mall Ngamwongwan</option>
                             <option>MALL-0007 The Mall Bangkae</option>
@@ -65,95 +67,81 @@
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
                         <div>
                             <label class="block text-sm font-bold text-gray-700 mb-1">ประเภท (Category)</label>
-                            <select id="category" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 outline-none transition">
-                                <option value="Hardware">Hardware (อุปกรณ์)</option>
-                                <option value="Software">Software (โปรแกรม)</option>
+                            <select id="category" class="w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none">
+                                <option value="Hardware">Hardware</option>
+                                <option value="Software">Software</option>
                             </select>
                         </div>
                         <div>
-                            <label class="block text-sm font-bold text-gray-700 mb-1">ชื่อ-เบอร์โทรผู้แจ้ง <span class="text-red-500">*</span></label>
-                            <input type="text" id="contact" placeholder="คุณสมชาย 081-234-5678" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 outline-none transition" required>
+                            <label class="block text-sm font-bold text-gray-700 mb-1">ชื่อ-เบอร์โทรผู้แจ้ง *</label>
+                            <input type="text" id="contact" placeholder="ระบุชื่อและเบอร์โทร" class="w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" required>
                         </div>
                     </div>
 
                     <div>
-                        <label class="block text-sm font-bold text-gray-700 mb-1">หัวข้อปัญหา (Short Description) <span class="text-red-500">*</span></label>
-                        <input type="text" id="short_description" placeholder="ระบุหัวข้อสั้นๆ เช่น เครื่องพิมพ์เสีย" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 outline-none transition" required>
+                        <label class="block text-sm font-bold text-gray-700 mb-1">หัวข้อปัญหา (Short Description) *</label>
+                        <input type="text" id="short_description" class="w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" required>
                     </div>
 
                     <div>
-                        <label class="block text-sm font-bold text-gray-700 mb-1">รายละเอียด (Description)</label>
-                        <textarea id="description" rows="3" placeholder="ระบุรายละเอียดเพิ่มเติม..." class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 outline-none transition"></textarea>
+                        <label class="block text-sm font-bold text-gray-700 mb-1">รายละเอียดเพิ่มเติม</label>
+                        <textarea id="description" rows="2" class="w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"></textarea>
                     </div>
 
-                    <button type="submit" id="btnSubmit" class="w-full bg-[#ed1c24] text-white font-bold py-4 rounded-lg hover:bg-[#c1131a] shadow-lg hover:shadow-red-200 transition-all duration-300 flex justify-center items-center gap-2 text-lg">
-                        <i class="fas fa-paper-plane"></i> ส่งข้อมูล (Submit Ticket)
+                    <div>
+                        <label class="block text-sm font-bold text-gray-700 mb-1">แนบรูปภาพ (สูงสุด 3 รูป)</label>
+                        <input type="file" id="imageInput" accept="image/*" multiple class="text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100">
+                    </div>
+
+                    <button type="submit" id="btnSubmit" class="w-full bg-blue-600 text-white font-bold py-4 rounded-lg hover:bg-blue-700 transition flex justify-center items-center gap-2">
+                        <i class="fas fa-paper-plane"></i> ส่งแจ้งปัญหา
                     </button>
                 </form>
             </div>
+
+            <div id="success-container" class="hidden bg-white p-12 rounded-2xl shadow-lg max-w-md mx-auto text-center border">
+                <div class="text-green-500 text-6xl mb-4"><i class="fas fa-check-circle"></i></div>
+                <h2 class="text-2xl font-bold text-gray-800 mb-2">ได้รับแจ้งปัญหาแล้ว!</h2>
+                <p class="text-gray-500 mb-6">จดหมายเลข Ticket ไว้เพื่อติดตามสถานะครับ</p>
+                <div class="bg-blue-50 p-4 rounded-xl mb-8 border border-blue-100">
+                    <span class="text-gray-500 text-xs uppercase font-bold block mb-1">Ticket Number</span>
+                    <span id="display-ticket-id" class="text-3xl font-black text-blue-700 font-mono tracking-tighter"></span>
+                </div>
+                <button onclick="location.reload()" class="w-full py-3 bg-gray-100 rounded-lg font-bold text-gray-600 hover:bg-gray-200 transition">กลับหน้าหลัก</button>
+            </div>
         </div>
 
-        <div id="admin-dashboard" class="hidden animate-fade-in">
-            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-                <div class="bg-white p-6 rounded-xl shadow-sm border-b-4 border-blue-500">
-                    <div class="flex justify-between items-start">
-                        <div>
-                            <p class="text-xs text-gray-500 font-bold uppercase tracking-wider">Total Tickets</p>
-                            <h2 id="total-count" class="text-3xl font-bold text-gray-800">0</h2>
-                        </div>
-                        <i class="fas fa-ticket-alt text-blue-200 text-2xl"></i>
+        <div id="admin-section" class="hidden">
+            <div class="flex flex-wrap justify-between items-center mb-6 gap-4">
+                <h3 class="text-xl font-bold text-gray-800"><i class="fas fa-list-ul mr-2"></i> All Incident Records</h3>
+                <div class="flex flex-wrap items-center gap-3">
+                    <div class="flex items-center gap-2 bg-white px-3 py-1.5 rounded-lg border shadow-sm">
+                        <label class="text-xs font-bold text-gray-400 uppercase">วันที่:</label>
+                        <input type="date" id="filter-date" class="text-sm outline-none border-none">
                     </div>
-                </div>
-                <div class="bg-white p-6 rounded-xl shadow-sm border-b-4 border-amber-500">
-                    <div class="flex justify-between items-start">
-                        <div>
-                            <p class="text-xs text-gray-500 font-bold uppercase tracking-wider">Waiting (รอรับงาน)</p>
-                            <h2 id="pending-count" class="text-3xl font-bold text-gray-800">0</h2>
-                        </div>
-                        <i class="fas fa-clock text-amber-200 text-2xl"></i>
-                    </div>
-                </div>
-                <div class="bg-white p-6 rounded-xl shadow-sm border-b-4 border-green-500">
-                    <div class="flex justify-between items-start">
-                        <div>
-                            <p class="text-xs text-gray-500 font-bold uppercase tracking-wider">Integrated (ดึงแล้ว)</p>
-                            <h2 id="pulled-count" class="text-3xl font-bold text-gray-800">0</h2>
-                        </div>
-                        <i class="fas fa-check-circle text-green-200 text-2xl"></i>
-                    </div>
-                </div>
-                <div class="bg-[#293e40] p-6 rounded-xl shadow-sm text-white">
-                    <div class="flex justify-between items-start">
-                        <div>
-                            <p class="text-xs text-gray-400 font-bold uppercase tracking-wider">User Role</p>
-                            <h2 class="text-lg font-bold">PM / Manager</h2>
-                        </div>
-                        <i class="fas fa-user-shield text-gray-500 text-2xl"></i>
-                    </div>
+                    <button onclick="exportToExcel()" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-sm font-bold flex items-center gap-2 shadow-md transition">
+                        <i class="fas fa-file-excel"></i> Export Excel
+                    </button>
+                    <button onclick="clearFilter()" class="text-sm text-blue-600 hover:underline">Show All</button>
                 </div>
             </div>
 
-            <div class="bg-white shadow-xl rounded-xl overflow-hidden border border-gray-200">
-                <div class="p-4 bg-gray-50 border-b flex justify-between items-center">
-                    <h3 class="font-bold text-gray-700"><i class="fas fa-table mr-2"></i> All Incidents Record</h3>
-                    <button onclick="window.print()" class="text-xs bg-white border border-gray-300 px-3 py-1.5 rounded hover:bg-gray-100 transition shadow-sm font-bold">
-                        <i class="fas fa-print mr-1"></i> PRINT REPORT
-                    </button>
-                </div>
+            <div class="bg-white shadow-xl rounded-xl overflow-hidden border">
                 <div class="overflow-x-auto">
-                    <table class="min-w-full text-left border-collapse">
-                        <thead class="bg-gray-100 text-gray-600 text-[11px] uppercase tracking-widest font-black">
+                    <table class="min-w-full text-left">
+                        <thead class="bg-gray-800 text-white text-[11px] uppercase font-bold">
                             <tr>
-                                <th class="px-6 py-4 border-b">Time (เวลา)</th>
-                                <th class="px-6 py-4 border-b">Caller (สาขา)</th>
-                                <th class="px-6 py-4 border-b text-center">Category</th>
-                                <th class="px-6 py-4 border-b">Short Description</th>
-                                <th class="px-6 py-4 border-b">Contact Info</th>
-                                <th class="px-6 py-4 border-b text-center">Status Flag</th>
+                                <th class="px-4 py-4 text-center">Ref No.</th>
+                                <th class="px-4 py-4">Opened</th>
+                                <th class="px-4 py-4">Caller</th>
+                                <th class="px-4 py-4 text-center">Cat.</th>
+                                <th class="px-4 py-4">Short Description</th>
+                                <th class="px-4 py-4">Contact</th>
+                                <th class="px-4 py-4 text-center">Images</th>
+                                <th class="px-4 py-4 text-center">Flag</th>
                             </tr>
                         </thead>
-                        <tbody id="ticket-list" class="text-sm divide-y divide-gray-100">
-                            </tbody>
+                        <tbody id="ticket-list" class="text-sm divide-y divide-gray-100"></tbody>
                     </table>
                 </div>
             </div>
@@ -162,9 +150,10 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-        import { getFirestore, collection, addDoc, query, orderBy, onSnapshot } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+        import { getFirestore, collection, addDoc, query, orderBy, onSnapshot, where, getCountFromServer } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+        import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js";
 
-        // Firebase Config ของคุณ
+        // คัดลอก Config จาก Firebase Console มาวางแทนที่ส่วนนี้ครับ
         const firebaseConfig = {
             apiKey: "AIzaSyCKhox_fzBzuU9n6Q4hv2fHSiXVUw7_I1U",
             authDomain: "service-now-79151.firebaseapp.com",
@@ -176,109 +165,107 @@
 
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
+        const storage = getStorage(app);
 
-        // --- 1. การส่ง Ticket ---
+        // ฟังก์ชันสร้างเลข Ticket INCYYMMDDXXX
+        async function generateTicketID() {
+            const now = new Date();
+            const YY = now.getFullYear().toString().slice(-2);
+            const MM = String(now.getMonth() + 1).padStart(2, '0');
+            const DD = String(now.getDate()).padStart(2, '0');
+            const dateStr = `${YY}${MM}${DD}`;
+            
+            const qCount = query(collection(db, "incidents"), where("date_only", "==", dateStr));
+            const snapshot = await getCountFromServer(qCount);
+            const nextNumber = String(snapshot.data().count + 1).padStart(3, '0');
+            
+            return { fullID: `INC${dateStr}${nextNumber}`, dateOnly: dateStr };
+        }
+
+        // บันทึก Ticket
         document.getElementById('incidentForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             const btn = document.getElementById('btnSubmit');
+            const files = document.getElementById('imageInput').files;
+            if(files.length > 3) return alert("แนบรูปได้สูงสุด 3 รูปครับ");
+
             btn.disabled = true;
-            btn.innerHTML = '<i class="fas fa-circle-notch animate-spin"></i> กำลังส่งข้อมูล...';
+            btn.innerHTML = '<i class="fas fa-spinner animate-spin"></i> บันทึกข้อมูล...';
 
             try {
+                const { fullID, dateOnly } = await generateTicketID();
+                const imageUrls = [];
+
+                // อัปโหลดรูปภาพ
+                for (let file of files) {
+                    const storageRef = ref(storage, `pics/${fullID}/${file.name}`);
+                    const snapshot = await uploadBytes(storageRef, file);
+                    imageUrls.push(await getDownloadURL(snapshot.ref));
+                }
+
                 await addDoc(collection(db, "incidents"), {
+                    ticket_id: fullID,
+                    date_only: dateOnly,
                     caller: document.getElementById('caller').value,
                     category: document.getElementById('category').value,
                     short_description: document.getElementById('short_description').value,
                     description: document.getElementById('description').value,
                     contact_info: document.getElementById('contact').value,
-                    is_pulled: false, // Flag เริ่มต้น
-                    status: "Pending",
+                    images: imageUrls,
+                    is_pulled: false,
                     timestamp: new Date()
                 });
-                alert("บันทึกข้อมูลสำเร็จ! Ticket ของคุณถูกส่งเข้าสู่ระบบแล้ว");
-                document.getElementById('incidentForm').reset();
-            } catch (err) {
-                console.error(err);
-                alert("เกิดข้อผิดพลาดในการส่งข้อมูล");
-            } finally {
-                btn.disabled = false;
-                btn.innerHTML = '<i class="fas fa-paper-plane"></i> ส่งข้อมูล (Submit Ticket)';
-            }
+
+                document.getElementById('display-ticket-id').innerText = fullID;
+                document.getElementById('form-container').classList.add('hidden');
+                document.getElementById('success-container').classList.remove('hidden');
+            } catch (err) { alert(err.message); btn.disabled = false; }
         });
 
-        // --- 2. การดึงข้อมูล Dashboard (Real-time) ---
-        const q = query(collection(db, "incidents"), orderBy("timestamp", "desc"));
-        onSnapshot(q, (snapshot) => {
+        // แสดงผล Dashboard
+        let ticketsData = [];
+        const renderData = (filterDate = "") => {
             const tbody = document.getElementById('ticket-list');
-            const totalH = document.getElementById('total-count');
-            const pendingH = document.getElementById('pending-count');
-            const pulledH = document.getElementById('pulled-count');
-
             tbody.innerHTML = "";
-            let counts = { all: 0, pending: 0, pulled: 0 };
+            let filtered = filterDate ? ticketsData.filter(t => t.date_only === filterDate.split('-').map(v=>v.slice(-2)).join('')) : ticketsData;
 
-            snapshot.forEach((doc) => {
-                const data = doc.data();
-                const isPulled = data.is_pulled || false;
-                
-                counts.all++;
-                isPulled ? counts.pulled++ : counts.pending++;
-
-                // กำหนดสไตล์ของหมวดหมู่
-                const catStyle = data.category === 'Hardware' 
-                    ? 'bg-purple-50 text-purple-700 border-purple-100' 
-                    : 'bg-cyan-50 text-cyan-700 border-cyan-100';
-
+            filtered.forEach(data => {
+                const imgHtml = data.images?.map(url => `<a href="${url}" target="_blank"><img src="${url}" class="h-8 w-8 inline-block border rounded mr-1 object-cover"></a>`).join('') || "-";
                 tbody.innerHTML += `
-                    <tr class="hover:bg-gray-50 transition duration-150 ${isPulled ? 'bg-green-50/20' : ''}">
-                        <td class="px-6 py-4 text-gray-500 font-mono text-xs">
-                            ${data.timestamp?.toDate().toLocaleString('th-TH', {hour12: false})}
-                        </td>
-                        <td class="px-6 py-4 font-bold text-gray-800">${data.caller}</td>
-                        <td class="px-6 py-4 text-center">
-                            <span class="px-2 py-0.5 rounded border text-[10px] font-black ${catStyle}">
-                                ${data.category.toUpperCase()}
-                            </span>
-                        </td>
-                        <td class="px-6 py-4 text-gray-700 font-medium">${data.short_description}</td>
-                        <td class="px-6 py-4">
-                            <div class="text-blue-600 font-bold">${data.contact_info}</div>
-                        </td>
-                        <td class="px-6 py-4 text-center">
-                            <span class="inline-flex items-center px-3 py-1 rounded-full text-[10px] font-black tracking-tighter ${isPulled ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-700 animate-pulse'}">
-                                <i class="fas ${isPulled ? 'fa-check-circle' : 'fa-clock'} mr-1.5 text-xs"></i>
-                                ${isPulled ? 'INTEGRATED' : 'WAITING'}
-                            </span>
-                        </td>
-                    </tr>
-                `;
+                    <tr>
+                        <td class="px-4 py-3 font-bold text-blue-700 text-center">${data.ticket_id}</td>
+                        <td class="px-4 py-3 text-gray-500 font-mono text-[10px]">${data.timestamp?.toDate().toLocaleString('th-TH')}</td>
+                        <td class="px-4 py-3 font-semibold">${data.caller}</td>
+                        <td class="px-4 py-3 text-center"><span class="px-2 py-0.5 rounded border text-[10px] font-bold ${data.category==='Hardware'?'bg-purple-50 text-purple-700':'bg-blue-50 text-blue-700'}">${data.category}</span></td>
+                        <td class="px-4 py-3">${data.short_description}</td>
+                        <td class="px-4 py-3 text-xs">${data.contact_info}</td>
+                        <td class="px-4 py-3 text-center">${imgHtml}</td>
+                        <td class="px-4 py-3 text-center"><i class="fas ${data.is_pulled?'fa-check-circle text-green-500':'fa-clock text-amber-500'}"></i></td>
+                    </tr>`;
             });
+        };
 
-            totalH.innerText = counts.all;
-            pendingH.innerText = counts.pending;
-            pulledH.innerText = counts.pulled;
+        onSnapshot(query(collection(db, "incidents"), orderBy("timestamp", "desc")), (snap) => {
+            ticketsData = snap.docs.map(d => d.data());
+            renderData(document.getElementById('filter-date').value);
         });
+
+        document.getElementById('filter-date').onchange = (e) => renderData(e.target.value);
+        window.clearFilter = () => { document.getElementById('filter-date').value = ""; renderData(); };
+
+        // Export Excel
+        window.exportToExcel = () => {
+            const ws = XLSX.utils.json_to_sheet(ticketsData.map(t => ({ "Ref No": t.ticket_id, "Opened": t.timestamp?.toDate().toLocaleString(), "Caller": t.caller, "Category": t.category, "Subject": t.short_description, "Contact": t.contact_info, "Integrated": t.is_pulled ? "YES" : "NO" })));
+            const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, "Incidents");
+            XLSX.writeFile(wb, `Report_${new Date().toLocaleDateString()}.xlsx`);
+        };
     </script>
-
     <script>
-        // ฟังก์ชันสลับหน้า Tab
-        function switchTab(tabName) {
-            document.getElementById('user-form').classList.add('hidden');
-            document.getElementById('admin-dashboard').classList.add('hidden');
-            document.getElementById(tabName).classList.remove('hidden');
-
-            document.getElementById('tab-user').classList.remove('tab-active');
-            document.getElementById('tab-admin').classList.remove('tab-active');
-            document.getElementById('tab-user').classList.add('text-gray-500');
-            document.getElementById('tab-admin').classList.add('text-gray-500');
-
-            if(tabName === 'user-form') {
-                document.getElementById('tab-user').classList.add('tab-active');
-                document.getElementById('tab-user').classList.remove('text-gray-500');
-            } else {
-                document.getElementById('tab-admin').classList.add('tab-active');
-                document.getElementById('tab-admin').classList.remove('text-gray-500');
-            }
+        function switchTab(id) {
+            document.getElementById('user-section').classList.toggle('hidden', id !== 'user-section');
+            document.getElementById('admin-section').classList.toggle('hidden', id !== 'admin-section');
+            document.getElementById('tab-user').classList.toggle('tab-active', id === 'user-section');
+            document.getElementById('tab-admin').classList.toggle('tab-active', id === 'admin-section');
         }
     </script>
 </body>
